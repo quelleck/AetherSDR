@@ -4,15 +4,12 @@
 #include "models/TransmitModel.h"
 
 #include <QByteArray>
-#include <QHash>
 #include <QLocale>
 #include <QMetaObject>
 #include <QStringList>
-#include <QTimer>
 #include <QtGlobal>
 
 #include <cmath>
-#include <memory>
 
 namespace AetherSDR {
 
@@ -25,7 +22,6 @@ constexpr quint64 kRigLevelRfPowerMeter      = (1ULL << 32);
 constexpr quint64 kRigLevelRfPowerMeterWatts = (1ULL << 39);
 constexpr qint64  kTxMeterFreshMs            = 1500;
 constexpr int     kHamlibSmartSdrSliceAModel = 23005;
-constexpr int     kMorseCompletionGraceMs    = 350;
 constexpr quint64 kRigGetLevelMask = kRigLevelRfPower
                                    | kRigLevelKeyspd
                                    | kRigLevelSwr
@@ -94,67 +90,6 @@ QString formatRigLevelValue(double value)
     if (text == "-0" || text == "-0.0")
         text = "0";
     return text;
-}
-
-const QHash<QChar, QString>& morseTable()
-{
-    static const QHash<QChar, QString> table = {
-        {'A', ".-"},    {'B', "-..."},  {'C', "-.-."},  {'D', "-.."},
-        {'E', "."},     {'F', "..-."},  {'G', "--."},   {'H', "...."},
-        {'I', ".."},    {'J', ".---"},  {'K', "-.-"},   {'L', ".-.."},
-        {'M', "--"},    {'N', "-."},    {'O', "---"},   {'P', ".--."},
-        {'Q', "--.-"},  {'R', ".-."},   {'S', "..."},   {'T', "-"},
-        {'U', "..-"},   {'V', "...-"},  {'W', ".--"},   {'X', "-..-"},
-        {'Y', "-.--"},  {'Z', "--.."},
-        {'0', "-----"}, {'1', ".----"}, {'2', "..---"}, {'3', "...--"},
-        {'4', "....-"}, {'5', "....."}, {'6', "-...."}, {'7', "--..."},
-        {'8', "---.."}, {'9', "----."},
-        {'.', ".-.-.-"},{',', "--..--"},{'?', "..--.."},{'\'',".----."},
-        {'!', "-.-.--"},{'/', "-..-."}, {'(', "-.--."}, {')', "-.--.-"},
-        {'&', ".-..."}, {':', "---..."},{';', "-.-.-."},{'=', "-...-"},
-        {'+', ".-.-."}, {'-', "-....-"},{'_', "..--.-"},{'"', ".-..-."},
-        {'$', "...-..-"},{'@', ".--.-."},
-    };
-    return table;
-}
-
-int estimateMorseDurationMs(const QString& text, int wpm)
-{
-    const int clampedWpm = qBound(5, wpm, 100);
-    const int unitMs = qMax(1, qRound(1200.0 / clampedWpm));
-    const auto& table = morseTable();
-    int units = 0;
-    bool firstChar = true;
-
-    for (const QChar raw : text.toUpper()) {
-        if (raw.isSpace() || raw == QChar(0x7f)) {
-            if (units > 0)
-                units += 7;
-            firstChar = true;
-            continue;
-        }
-
-        const auto it = table.find(raw);
-        if (it == table.end()) {
-            if (units > 0)
-                units += 7;
-            firstChar = true;
-            continue;
-        }
-
-        if (!firstChar)
-            units += 3;
-        firstChar = false;
-
-        const QString& pattern = it.value();
-        for (int i = 0; i < pattern.size(); ++i) {
-            if (i > 0)
-                units += 1;
-            units += (pattern[i] == '.') ? 1 : 3;
-        }
-    }
-
-    return units * unitMs + 500;
 }
 
 } // namespace
@@ -260,62 +195,6 @@ SliceModel* RigctlProtocol::sliceForVfo(const QString& vfo) const
 QString RigctlProtocol::rprt(int code) const
 {
     return QStringLiteral("RPRT %1\n").arg(code);
-}
-
-void RigctlProtocol::scheduleMorseAck(const QString& text)
-{
-    if (!m_model || !m_asyncResponder)
-        return;
-
-    auto* cwx = &m_model->cwxModel();
-    const int expectedChars = text.size();
-    const int timeoutMs = estimateMorseDurationMs(text, cwx->speed());
-    const auto responder = m_asyncResponder;
-
-    auto pending = std::make_shared<bool>(true);
-    m_asyncResponsePending = pending;
-    auto sentConn = std::make_shared<QMetaObject::Connection>();
-    auto erasedConn = std::make_shared<QMetaObject::Connection>();
-    auto cancelConn = std::make_shared<QMetaObject::Connection>();
-    auto finish = [pending, responder, sentConn, erasedConn, cancelConn]() mutable {
-        if (!*pending)
-            return;
-        *pending = false;
-        QObject::disconnect(*sentConn);
-        QObject::disconnect(*erasedConn);
-        QObject::disconnect(*cancelConn);
-        responder(QStringLiteral("RPRT 0\n"));
-    };
-    m_completeAsyncResponse = finish;
-
-    auto sentCount = std::make_shared<int>(0);
-    *sentConn = QObject::connect(cwx, &CwxModel::charSent, cwx,
-        [cwx, expectedChars, sentCount, finish](int) mutable {
-            ++(*sentCount);
-            if (*sentCount >= expectedChars) {
-                QTimer::singleShot(kMorseCompletionGraceMs, cwx, [finish]() mutable {
-                    finish();
-                });
-            }
-        });
-    *erasedConn = QObject::connect(cwx, &CwxModel::erased, cwx,
-        [finish](int, int) mutable {
-            finish();
-        });
-    *cancelConn = QObject::connect(cwx, &CwxModel::transmissionCancelled, cwx,
-        [finish]() mutable {
-            finish();
-        });
-
-    QTimer::singleShot(timeoutMs, cwx, [finish]() mutable {
-        finish();
-    });
-}
-
-void RigctlProtocol::completePendingAsyncResponse()
-{
-    if (hasPendingAsyncResponse() && m_completeAsyncResponse)
-        m_completeAsyncResponse();
 }
 
 // ── Main entry point ────────────────────────────────────────────────────────
@@ -1046,21 +925,16 @@ QString RigctlProtocol::cmdSendMorse(const QString& text)
         m_pendingMorseLine = true;
         return {};
     }
-    const bool asyncAck = static_cast<bool>(m_asyncResponder);
-    if (asyncAck)
-        scheduleMorseAck(text);
-
     auto* model = m_model;
     QMetaObject::invokeMethod(model, [model, text]() {
         model->cwxModel().send(text);
     }, Qt::QueuedConnection);
-    return asyncAck ? QString() : rprt(0);
+    return rprt(0);
 }
 
 QString RigctlProtocol::cmdStopMorse()
 {
     if (!m_model) return rprt(-1);
-    completePendingAsyncResponse();
     auto* model = m_model;
     QMetaObject::invokeMethod(model, [model]() {
         model->cwxModel().clearBuffer();

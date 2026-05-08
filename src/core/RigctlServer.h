@@ -40,7 +40,6 @@ private slots:
 
 private:
     void processClientData(QTcpSocket* socket);
-    static bool canProcessWhileAsyncPending(const QString& line);
 
     struct ClientState {
         QTcpSocket*     socket{nullptr};

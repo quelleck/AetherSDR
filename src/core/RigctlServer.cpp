@@ -3,9 +3,6 @@
 #include "RigctlProtocol.h"
 #include "models/RadioModel.h"
 
-#include <QMetaObject>
-#include <QPointer>
-
 namespace AetherSDR {
 
 RigctlServer::RigctlServer(RadioModel* model, QObject* parent)
@@ -74,17 +71,6 @@ quint16 RigctlServer::port() const
     return m_server ? m_server->serverPort() : 0;
 }
 
-bool RigctlServer::canProcessWhileAsyncPending(const QString& line)
-{
-    QString trimmed = line.trimmed();
-    while (trimmed.startsWith('+'))
-        trimmed = trimmed.mid(1).trimmed();
-
-    return trimmed == "q"
-        || trimmed == "\\quit"
-        || trimmed == "\\stop_morse";
-}
-
 void RigctlServer::onNewConnection()
 {
     while (m_server->hasPendingConnections()) {
@@ -92,22 +78,6 @@ void RigctlServer::onNewConnection()
         socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);  // TCP_NODELAY
         auto* protocol = new RigctlProtocol(m_model);
         protocol->setSliceIndex(m_sliceIndex);
-        QPointer<RigctlServer> self(this);
-        QPointer<QTcpSocket> socketPtr(socket);
-        protocol->setAsyncResponder([self, socketPtr](const QString& response) {
-            if (!socketPtr || response.isEmpty())
-                return;
-            if (socketPtr->state() != QAbstractSocket::ConnectedState)
-                return;
-            qCDebug(lcCat) << "rigctld async resp:" << response.left(60).trimmed();
-            socketPtr->write(response.toUtf8());
-            if (self) {
-                QMetaObject::invokeMethod(self, [self, socketPtr]() {
-                    if (self && socketPtr)
-                        self->processClientData(socketPtr);
-                }, Qt::QueuedConnection);
-            }
-        });
 
         ClientState cs;
         cs.socket = socket;
@@ -150,15 +120,10 @@ void RigctlServer::processClientData(QTcpSocket* socket)
         if (nlPos < 0) break;
 
         QString line = QString::fromUtf8(cs.buffer.left(nlPos));
-        QString trimmed = line.trimmed();
-        if (cs.protocol->hasPendingAsyncResponse()
-            && !canProcessWhileAsyncPending(trimmed)) {
-            return;
-        }
-
         cs.buffer.remove(0, nlPos + 1);
 
         // Check for quit
+        QString trimmed = line.trimmed();
         if (trimmed == "q" || trimmed == "\\quit") {
             socket->disconnectFromHost();
             return;
@@ -169,9 +134,6 @@ void RigctlServer::processClientData(QTcpSocket* socket)
             qCDebug(lcCat) << "rigctld cmd:" << trimmed
                      << "-> resp:" << response.left(60).trimmed();
             socket->write(response.toUtf8());
-        } else if (cs.protocol->hasPendingAsyncResponse()) {
-            qCDebug(lcCat) << "rigctld cmd:" << trimmed << "-> async resp pending";
-            return;
         }
     }
 }
