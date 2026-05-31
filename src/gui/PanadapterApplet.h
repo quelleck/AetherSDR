@@ -9,6 +9,7 @@ class QTextEdit;
 
 namespace AetherSDR {
 
+class RangeSlider;
 class SpectrumWidget;
 
 // Container for a single panadapter display (FFT spectrum + waterfall).
@@ -60,6 +61,8 @@ signals:
     void dockClicked();
     void maximizeRequested(const QString& panId);
     void pitchRangeChanged(int minHz, int maxHz);
+    // ggmorse coarse-search WPM bounds (#3331).
+    void speedRangeChanged(int minWpm, int maxWpm);
     void cwPanelCloseRequested();
 
 protected:
@@ -82,10 +85,9 @@ private:
     QSlider*      m_cwSensSlider{nullptr};
     QPushButton*  m_lockPitchBtn{nullptr};
     QPushButton*  m_lockSpeedBtn{nullptr};
-    QSlider*      m_pitchMinSlider{nullptr};
-    QSlider*      m_pitchMaxSlider{nullptr};
-    QLabel*       m_pitchMinValLabel{nullptr};
-    QLabel*       m_pitchMaxValLabel{nullptr};
+    // Two-handle widgets replace the previous Lo/Hi QSlider pair (#3331).
+    RangeSlider*  m_pitchRange{nullptr};
+    RangeSlider*  m_speedRange{nullptr};
     float         m_cwCostThreshold{0.70f};
 
     // Last CW text source — used by appendCwText / appendCwTextTx so the

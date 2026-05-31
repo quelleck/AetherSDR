@@ -39,6 +39,10 @@ public:
     void lockPitch(bool lock);
     void lockSpeed(bool lock);
     void setPitchRange(int minHz, int maxHz);
+    // Bound the ggmorse coarse speed sweep to the operator-configured
+    // WPM range (#3331).  Values of 0 / negative reset to the full
+    // upstream sweep.  See third_party/ggmorse local patch.
+    void setSpeedRange(int minWpm, int maxWpm);
 
     // Force pitch + speed to specific values and lock both — used by the
     // TX-side decoder (#2417) where the operator's keying parameters are
@@ -59,6 +63,11 @@ signals:
 
 private:
     void decodeLoop();
+    // Push the current pitch/speed/range state into m_ggmorse — single
+    // chokepoint so all mutators (start, lockPitch, lockSpeed,
+    // setPitchRange, setSpeedRange, setKnownParameters) configure the
+    // decoder identically (#3331).
+    void applyDecodeParameters();
 
     QThread*      m_workerThread{nullptr};
     std::unique_ptr<GGMorse> m_ggmorse;
@@ -75,6 +84,10 @@ private:
     std::atomic<bool> m_speedLocked{false};
     std::atomic<float> m_pitchRangeMin{500.0f};
     std::atomic<float> m_pitchRangeMax{700.0f};
+    // -1 = use ggmorse's full coarse sweep (upstream default).  Set by
+    // PanadapterApplet's WPM RangeSlider via setSpeedRange (#3331).
+    std::atomic<float> m_speedRangeMin{-1.0f};
+    std::atomic<float> m_speedRangeMax{-1.0f};
 };
 
 } // namespace AetherSDR

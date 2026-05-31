@@ -197,6 +197,8 @@ const GGMorse::ParametersDecode & GGMorse::getDefaultParametersDecode() {
         1200.0f,
         true,
         true,
+        -1.0f,  // speedRangeMin_wpm: -1 = use full sweep (AetherSDR #3331)
+        -1.0f,  // speedRangeMax_wpm
     };
 
     return result;
@@ -750,6 +752,13 @@ void GGMorse::decode_float() {
     int bestLevelIdx = 0;
     int bestSpeedIdx = 0;
 
+    // AetherSDR local patch (#3331): coarse speed sweep configurable.
+    // Default sweep is unchanged from upstream (s in [0, 50] @ step 10 →
+    // WPM 5, 15, 25, 35, 45) when neither the per-decode `speed_wpm` nor
+    // the new range fields are set.  Setting the range tightens s0/s1 to
+    // (wpm−5) and reduces ds to 2 so every 2 WPM in the range is tested,
+    // which is what the issue (#3331) calls for.  The `s < 55` cap inside
+    // the loop is the hard upper bound (~59 WPM); the UI clamps to that.
     int s0 = 0;
     int s1 = 50;
     int ds = 10;
@@ -758,6 +767,13 @@ void GGMorse::decode_float() {
     if (speed_wpm > 0.0f && speed_wpm < 100.0f) {
         s0 = s1 = std::round(speed_wpm - 5.0f);
         nModes = 1;
+    } else if (m_impl->parametersDecode.speedRangeMin_wpm > 0.0f
+            && m_impl->parametersDecode.speedRangeMax_wpm > 0.0f) {
+        const float rmin = m_impl->parametersDecode.speedRangeMin_wpm;
+        const float rmax = std::max(rmin, m_impl->parametersDecode.speedRangeMax_wpm);
+        s0 = std::min(std::max(0.0f, std::round(rmin - 5.0f)), 54.0f);
+        s1 = std::min(std::max(0.0f, std::round(rmax - 5.0f)), 54.0f);
+        ds = 2;
     }
 
     m_impl->thresholdF.push_back(m_impl->statistics.signalThreshold);

@@ -1,6 +1,7 @@
 #include "PanadapterApplet.h"
 #include "FramelessMoveHelper.h"
 #include "GuardedSlider.h"
+#include "RangeSlider.h"
 #include "SliceLabel.h"
 #include "SpectrumWidget.h"
 #include "Theme.h"
@@ -175,70 +176,25 @@ PanadapterApplet::PanadapterApplet(QWidget* parent)
     m_lockSpeedBtn->setStyleSheet(m_lockPitchBtn->styleSheet());
     cwBar->addWidget(m_lockSpeedBtn);
 
-    // Pitch range sliders — constrain decoder frequency search.  Compact
-    // 50px-wide sliders for the CW bar; sizes kept site-local (deliberate
-    // narrow handle), colours routed through the color.slider.* namespace
-    // so the per-applet override path can retint them and live theme
-    // switching works without a per-site reapplication.
-    const QString rangeSliderStyle = QStringLiteral(
-        "QSlider::groove:horizontal { background: {{color.slider.background}}; height: 4px; border-radius: 2px; }"
-        "QSlider::handle:horizontal { background: {{color.slider.handle}}; width: 8px; margin: -3px 0; border-radius: 4px; }");
+    // Pitch + WPM range widgets — single double-ended slider per axis
+    // replaces the previous Lo/Hi pair (#3331).  Pitch default 500–700 Hz
+    // matches the prior Lo/Hi values; WPM default 15–40 over 5–60 follows
+    // the issue spec, with the upper bound capped at the ggmorse coarse
+    // sweep ceiling (~59 WPM, see third_party/ggmorse local patch).
+    m_pitchRange = new RangeSlider(300, 1200, 500, 700,
+        QStringLiteral("Pitch"), QStringLiteral("Hz"));
+    m_pitchRange->setFixedWidth(180);
+    cwBar->addWidget(m_pitchRange);
 
-    auto* minLabel = new QLabel("Lo:");
-    AetherSDR::ThemeManager::instance().applyStyleSheet(minLabel, "QLabel { color: {{color.text.label}}; font-size: 8px; background: transparent; }");
-    cwBar->addWidget(minLabel);
+    m_speedRange = new RangeSlider(5, 60, 15, 40,
+        QStringLiteral("WPM"), QStringLiteral("WPM"));
+    m_speedRange->setFixedWidth(180);
+    cwBar->addWidget(m_speedRange);
 
-    m_pitchMinSlider = new GuardedSlider(Qt::Horizontal);
-    m_pitchMinSlider->setRange(300, 1200);
-    m_pitchMinSlider->setValue(500);
-    m_pitchMinSlider->setFixedWidth(50);
-    AetherSDR::ThemeManager::instance().applyStyleSheet(m_pitchMinSlider, rangeSliderStyle);
-    m_pitchMinSlider->setToolTip("Decoder pitch search minimum (Hz)");
-    cwBar->addWidget(m_pitchMinSlider);
-    m_pitchMinValLabel = new QLabel(QString::number(m_pitchMinSlider->value()));
-    AetherSDR::ThemeManager::instance().applyStyleSheet(m_pitchMinValLabel, "QLabel { color: {{color.text.label}}; font-size: 8px; background: transparent; }");
-    m_pitchMinValLabel->setFixedWidth(24);
-    cwBar->addWidget(m_pitchMinValLabel);
-
-    auto* maxLabel = new QLabel("Hi:");
-    AetherSDR::ThemeManager::instance().applyStyleSheet(maxLabel, "QLabel { color: {{color.text.label}}; font-size: 8px; background: transparent; }");
-    cwBar->addWidget(maxLabel);
-
-    m_pitchMaxSlider = new GuardedSlider(Qt::Horizontal);
-    m_pitchMaxSlider->setRange(300, 1200);
-    m_pitchMaxSlider->setValue(700);
-    m_pitchMaxSlider->setFixedWidth(50);
-    AetherSDR::ThemeManager::instance().applyStyleSheet(m_pitchMaxSlider, rangeSliderStyle);
-    m_pitchMaxSlider->setToolTip("Decoder pitch search maximum (Hz)");
-    cwBar->addWidget(m_pitchMaxSlider);
-    m_pitchMaxValLabel = new QLabel(QString::number(m_pitchMaxSlider->value()));
-    AetherSDR::ThemeManager::instance().applyStyleSheet(m_pitchMaxValLabel, "QLabel { color: {{color.text.label}}; font-size: 8px; background: transparent; }");
-    m_pitchMaxValLabel->setFixedWidth(24);
-    cwBar->addWidget(m_pitchMaxValLabel);
-
-    // Update tooltips and emit range change — clamp so min ≤ max
-    connect(m_pitchMinSlider, &QSlider::valueChanged, this, [this](int v) {
-        if (v > m_pitchMaxSlider->value()) {
-            QSignalBlocker b(m_pitchMinSlider);
-            m_pitchMinSlider->setValue(m_pitchMaxSlider->value());
-            v = m_pitchMaxSlider->value();
-        }
-        m_pitchMinSlider->setToolTip(QString("%1 Hz").arg(v));
-        m_pitchMinValLabel->setText(QString::number(v));
-        emit pitchRangeChanged(v, m_pitchMaxSlider->value());
-    });
-    connect(m_pitchMaxSlider, &QSlider::valueChanged, this, [this](int v) {
-        if (v < m_pitchMinSlider->value()) {
-            QSignalBlocker b(m_pitchMaxSlider);
-            m_pitchMaxSlider->setValue(m_pitchMinSlider->value());
-            v = m_pitchMinSlider->value();
-        }
-        m_pitchMaxSlider->setToolTip(QString("%1 Hz").arg(v));
-        m_pitchMaxValLabel->setText(QString::number(v));
-        emit pitchRangeChanged(m_pitchMinSlider->value(), v);
-    });
-    m_pitchMinSlider->setToolTip(QString("%1 Hz").arg(m_pitchMinSlider->value()));
-    m_pitchMaxSlider->setToolTip(QString("%1 Hz").arg(m_pitchMaxSlider->value()));
+    connect(m_pitchRange, &RangeSlider::rangeChanged,
+            this, &PanadapterApplet::pitchRangeChanged);
+    connect(m_speedRange, &RangeSlider::rangeChanged,
+            this, &PanadapterApplet::speedRangeChanged);
 
     cwBar->addStretch();
 

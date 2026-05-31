@@ -49,6 +49,13 @@ extern "C" {
 
         bool applyFilterHighPass;
         bool applyFilterLowPass;
+
+        // AetherSDR local patch (#3331): bound the coarse speed-search
+        // sweep (s0/s1 in the decode loop) to an operator-configured
+        // WPM range.  Defaults are -1 = "use the full sweep" so the
+        // upstream behaviour is preserved when these are unset.
+        float speedRangeMin_wpm;
+        float speedRangeMax_wpm;
     } ggmorse_ParametersDecode;
 
     typedef struct {
