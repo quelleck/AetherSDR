@@ -223,6 +223,7 @@ private:
     qint64            m_rxAudioPackets{0};
     qint64            m_rxAudioFramesSent{0};
     bool              m_lastTx{false};
+    bool              m_lastTune{false};       // edge-detect for tune: broadcast (#3327)
     float             m_cachedSLevel[8]{-130,-130,-130,-130,-130,-130,-130,-130};
     float             m_cachedFwdPower{0};
     float             m_cachedSwr{1.0f};

@@ -1758,6 +1758,43 @@ void TciServer::broadcastStatus()
             }
         }
     }
+
+    // Broadcast Tune-operation state changes (#3327).
+    // ExpertSDR3-compatible clients expect a tune:<rx>,<bool>; event so that
+    // station hardware (e.g. a BPF controller) can bypass during a tune cycle.
+    // Aggregate the three tune paths into one "tune active" condition — the
+    // same derivation MainWindow uses to guard FreeDV TX reporting:
+    //   transmit tune  → TransmitModel::isTuning()        (transmit tune 1)
+    //   ATU autotune   → atuStatus() == ATUStatus::InProgress (atu start)
+    //   TGXL autotune  → TunerModel::isTuning()           (tgxl autotune)
+    // Poll-based edge detection against m_lastTune mirrors the trx: block
+    // above, so a single tune event fires per transition. Because it is driven
+    // off model state it broadcasts identically whether the tune was started
+    // from the AetherSDR UI, hardware, or another TCI client — no feedback
+    // loop, no mutex on the audio path.
+    TransmitModel& txm = m_model->transmitModel();
+    bool tuning = txm.isTuning()
+               || txm.atuStatus() == ATUStatus::InProgress
+               || m_model->tunerModel().isTuning();
+    if (tuning != m_lastTune) {
+        m_lastTune = tuning;
+        int tuneTrx = 0;
+        for (auto* s : m_model->slices()) {
+            if (s->isTxSlice()) {
+                tuneTrx = TciProtocol::tciTrxForSlice(m_model, s);
+                break;
+            }
+        }
+        // Same TX_CHRONO-initiator echo guard as trx: never reflect a tune
+        // event back to the client that drove TX, to avoid PTT/tune cycling
+        // on WSJT-X/JTDX-style clients.
+        QString tuneMsg = QStringLiteral("tune:%1,%2;")
+                              .arg(tuneTrx).arg(tuning ? "true" : "false");
+        for (auto& cs : m_clients) {
+            if (cs.socket != m_txChronoClient)
+                cs.socket->sendTextMessage(tuneMsg);
+        }
+    }
 }
 
 // ── IQ data from DAX IQ stream → TCI binary frames (type=0) ───────────
