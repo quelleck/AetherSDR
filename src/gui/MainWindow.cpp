@@ -8671,9 +8671,18 @@ void MainWindow::buildMenuBar()
 
     // Band Plan submenu — Off / Small / Medium / Large / Huge
     auto* bandPlanMenu = viewMenu->addMenu("Band Plan");
-    int savedBpSize = AppSettings::instance().value("BandPlanFontSize", "").toInt();
-    if (savedBpSize == 0 && AppSettings::instance().value("ShowBandPlan", "True").toString() == "True")
-        savedBpSize = 6;  // migrate old boolean setting
+    // Distinguish "absent" from "explicitly 0 (Off)" so an Off choice
+    // survives restart.  Previously .toInt() coerced both to 0 and the
+    // legacy migration branch promoted Off back to Small (#3358).
+    int savedBpSize;
+    if (AppSettings::instance().contains("BandPlanFontSize")) {
+        savedBpSize = AppSettings::instance().value("BandPlanFontSize").toInt();
+    } else {
+        savedBpSize = AppSettings::instance()
+                          .value("ShowBandPlan", "True").toString() == "True"
+                          ? 6   // migrate old boolean setting (Small)
+                          : 0;  // legacy Off
+    }
     auto* bpGroup = new QActionGroup(bandPlanMenu);
     struct BpOption { const char* label; int pt; };
     for (auto [label, pt] : {BpOption{"Off", 0}, {"Small", 6}, {"Medium", 10}, {"Large", 12}, {"Huge", 16}}) {
