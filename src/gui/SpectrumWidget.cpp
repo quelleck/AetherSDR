@@ -1007,6 +1007,12 @@ VfoWidget* SpectrumWidget::addVfoWidget(int sliceId)
     // fix below stays verifiable (measured ~41 ms gap without it -> ~3 ms with).
     if (m_gpuFlagMode && lcPerf().isDebugEnabled())
         qCDebug(lcPerf).nospace() << "FlagCreated slice=" << sliceId;
+    // #3777: in GPU-flag mode the non-live flag is shown from an off-screen
+    // QImage sprite, which gets only grayscale (not ClearType) AA — full hinting
+    // grid-fits the glyph stems so the idle sprite text stays crisp.  One-time,
+    // before the first grab; children created later inherit the hint from root.
+    if (m_gpuFlagMode)
+        applyFlagFullHinting(w);
     // #3746(2) fix: rasterize the new flag's sprite immediately (off-frame, safe)
     // so a non-live new slice isn't blank until the next refresh-timer tick.
     // repositionVfoFlags() positions the quad next frame.
@@ -1237,6 +1243,37 @@ void SpectrumWidget::updateFlagRefreshTimer()
     } else if (!present && active) {
         m_flagRefreshTimer->stop();
         qCDebug(lcPerf) << "FlagRefreshTimer STOP (hidden/minimized)";
+    }
+}
+
+// #3777: Force full hinting on a flag and its whole widget subtree so glyph
+// stems grid-fit to the device-pixel grid when the flag is rasterized off-screen
+// into a QImage sprite.  Qt's raster engine emits only GRAYSCALE antialiasing
+// into a QImage — it never produces the native ClearType subpixel AA it uses
+// when a flag is painted live to the window surface on hover — so idle sprites
+// looked soft, worst on thin DSEG-Modern 7-seg stems and the small secondary
+// labels (ANT1/1.8K/DSP/LSB).  Subpixel AA into an off-screen buffer is not
+// available on Windows, so we cannot reach exact parity with the hovered live
+// widget; full hinting recovers most of the crispness without touching the
+// compositor.  The hinting attribute isn't a CSS property, so it survives later
+// ThemeManager::applyStyleSheet() re-resolves (which only setStyleSheet(), never
+// setFont()), and children created or restyled later inherit it from the root.
+// Harmless on the live widget (ClearType already hints), so hover/idle stay
+// consistent.  Applied once per flag at creation (GPU-flag mode only).
+static void applyFlagFullHinting(QWidget* root)
+{
+    if (!root) {
+        return;
+    }
+    const auto hint = [](QWidget* w) {
+        QFont f = w->font();
+        f.setHintingPreference(QFont::PreferFullHinting);
+        w->setFont(f);
+    };
+    hint(root);
+    const QList<QWidget*> kids = root->findChildren<QWidget*>();
+    for (QWidget* w : kids) {
+        hint(w);
     }
 }
 
