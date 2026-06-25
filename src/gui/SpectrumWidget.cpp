@@ -594,14 +594,23 @@ SpectrumWidget::SpectrumWidget(QWidget* parent)
 #ifdef AETHER_GPU_SPECTRUM
     // #3617: GPU-composite the slice flags instead of letting them composite as
     // translucent raster QWidget siblings over the QRhiWidget (which pegs the
-    // main thread re-blending them on every ~30 Hz waterfall frame).  On by
-    // default; set AETHER_NO_GPU_FLAGS=1 to fall back to the legacy live-widget
-    // flags (A/B comparison).  The flag panels are rendered into a dedicated
-    // GPU texture (see renderGpuFrame); the small external buttons stay live
-    // widgets.  This refresh timer re-snapshots the flags so live content
-    // (S-meter, freq) keeps updating — ~12 Hz is smooth for a meter and far
-    // cheaper than the per-frame composite it replaces.
-    m_gpuFlagMode = !qEnvironmentVariableIsSet("AETHER_NO_GPU_FLAGS");
+    // main thread re-blending them on every ~30 Hz waterfall frame).  The flag
+    // panels are rendered into a dedicated GPU texture (see renderGpuFrame); the
+    // small external buttons stay live widgets.  This refresh timer re-snapshots
+    // the flags so live content (S-meter, freq) keeps updating — ~12 Hz is smooth
+    // for a meter and far cheaper than the per-frame composite it replaces.
+    //
+    // #3777: DEFAULT FLIPPED to legacy live-widget flags.  The GPU-sprite path
+    // rasterizes idle flags off-screen, where Qt's raster engine emits only
+    // grayscale (never subpixel/ClearType) text AA — so idle flag text reads
+    // softer than the live, hovered flag on Windows, and the live↔sprite swap
+    // also drives input-routing regressions (e.g. Diversity-mode RX-antenna
+    // selection).  Live widgets are crisp and interaction-correct at the cost of
+    // the ~+0.37-core main-thread composite #3695 removed.  The GPU path is kept
+    // intact behind an opt-IN env var so the trade can still be A/B-measured:
+    // set AETHER_GPU_FLAGS=1 to re-enable GPU-composited flags.  (The legacy
+    // AETHER_NO_GPU_FLAGS toggle is now redundant — live is the default.)
+    m_gpuFlagMode = qEnvironmentVariableIsSet("AETHER_GPU_FLAGS");
     m_flagRefreshTimer = new QTimer(this);
     m_flagRefreshTimer->setInterval(80);
     connect(m_flagRefreshTimer, &QTimer::timeout, this, [this]() {
