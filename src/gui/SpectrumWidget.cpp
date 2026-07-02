@@ -8133,11 +8133,18 @@ void SpectrumWidget::initSpectrumPipeline()
     QRhi* r = rhi();
 
     // Column texture is (re)created at the spectrum viewport width in
-    // renderGpuFrame; only the fixed resources are built here. R32F is
-    // universal on the desktop backends; fall back to R16F (mandatory
-    // linear-filterable since GLES3) for anything that lacks it.
-    m_fftColFormat = r->isTextureFormatSupported(QRhiTexture::R32F)
-        ? QRhiTexture::R32F : QRhiTexture::R16F;
+    // renderGpuFrame; only the fixed resources are built here. The column is
+    // sampled with LINEAR filtering (see m_fftColSampler below), so the format
+    // must be linearly *filterable*, not merely creatable. R16F is the only
+    // float format QRhi guarantees is linear-filterable on every backend; R32F
+    // is filterable on modern desktop GL/Vulkan/Metal but NOT on older D3D11
+    // hardware (Intel iGPUs, feature level <= 10.0), where isTextureFormatSupported
+    // still returns true — the Linear sampler then silently degrades to point
+    // sampling and panscope.frag's dFdx slope correction fattens the trace into
+    // a blurred band (issue #3967). The stored value is a normalized 0..1
+    // amplitude (see renderGpuFrame), for which half-float has ample precision,
+    // so use R16F unconditionally and drop the unreliable hardware-parity fork.
+    m_fftColFormat = QRhiTexture::R16F;
     m_fftScopeUbo = r->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer,
                                  5 * 4 * sizeof(float));
     m_fftScopeUbo->create();
@@ -9024,7 +9031,7 @@ void SpectrumWidget::renderGpuFrame(QRhiCommandBuffer* cb)
         // The display trace (spatially smoothed + Catmull-Rom resampled by
         // buildFftDisplayTrace) is sampled at one point per DEVICE pixel
         // column, normalized to the dynamic range, and uploaded as a width×1
-        // R32F texture; panscope.frag evaluates fill + feather + core stroke
+        // R16F texture; panscope.frag evaluates fill + feather + core stroke
         // per pixel. This replaces the per-frame feather/core/fill vertex
         // bake and its ~1.4 MB/frame VBO uploads.
         QElapsedTimer panStatsFftTimer;
@@ -9056,19 +9063,15 @@ void SpectrumWidget::renderGpuFrame(QRhiCommandBuffer* cb)
 
                 const float minDbm = m_refLevel - m_dynamicRange;
                 const float range = qMax(1e-3f, m_dynamicRange);
-                if (m_fftColFormat == QRhiTexture::R32F) {
-                    m_fftColScratch.resize(n * int(sizeof(float)));
-                    float* colData = reinterpret_cast<float*>(m_fftColScratch.data());
-                    for (int i = 0; i < n; ++i) {
-                        colData[i] = qBound(0.0f, (trace[i] - minDbm) / range, 1.0f);
-                    }
-                } else {  // R16F fallback (GL without float32 filtering)
-                    m_fftColScratch.resize(n * int(sizeof(qfloat16)));
-                    qfloat16* colData = reinterpret_cast<qfloat16*>(m_fftColScratch.data());
-                    for (int i = 0; i < n; ++i) {
-                        colData[i] = qfloat16(
-                            qBound(0.0f, (trace[i] - minDbm) / range, 1.0f));
-                    }
+                // R16F unconditionally — the only guaranteed linear-filterable
+                // float format across QRhi backends (see initSpectrumPipeline,
+                // issue #3967). Half-float has ample precision for the
+                // normalized 0..1 amplitude stored here.
+                m_fftColScratch.resize(n * int(sizeof(qfloat16)));
+                qfloat16* colData = reinterpret_cast<qfloat16*>(m_fftColScratch.data());
+                for (int i = 0; i < n; ++i) {
+                    colData[i] = qfloat16(
+                        qBound(0.0f, (trace[i] - minDbm) / range, 1.0f));
                 }
                 QRhiTextureSubresourceUploadDescription colDesc;
                 colDesc.setData(m_fftColScratch);
