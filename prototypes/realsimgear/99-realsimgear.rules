@@ -1,0 +1,11 @@
+# RealSimGear panels — udev rules for Linux
+# Install: sudo cp 99-realsimgear.rules /etc/udev/rules.d/ && sudo udevadm control --reload
+#
+# 1) World-accessible tty nodes for every RSG serial device (VID 32b6)
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{idVendor}=="32b6", MODE="0666"
+#
+# 2) Teach the ch341 driver the CH340-based panels (custom VID, so the
+#    driver doesn't claim them on its own). Idempotent; '|| true' guards
+#    the duplicate-id error on re-plug.
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="32b6", ATTR{idProduct}=="0016", RUN{program}+="/bin/sh -c 'modprobe ch341; echo 32b6 0016 > /sys/bus/usb-serial/drivers/ch341-uart/new_id || true'"
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="32b6", ATTR{idProduct}=="000d", RUN{program}+="/bin/sh -c 'modprobe ch341; echo 32b6 000d > /sys/bus/usb-serial/drivers/ch341-uart/new_id || true'"

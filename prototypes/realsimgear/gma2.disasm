@@ -1,0 +1,3819 @@
+0000:  jmp	796
+0004:  jmp	3898
+0008:  jmp	3810
+000c:  jmp	3722
+0010:  jmp	3634
+0014:  jmp	3546
+0018:  jmp	3458
+001c:  jmp	894
+0020:  jmp	894
+0024:  jmp	894
+0028:  jmp	894
+002c:  jmp	894
+0030:  jmp	894
+0034:  jmp	894
+0038:  jmp	894
+003c:  jmp	894
+0040:  jmp	894
+0044:  jmp	894
+0048:  jmp	894
+004c:  jmp	894
+0050:  jmp	894
+0054:  jmp	894
+0058:  jmp	894
+005c:  jmp	3310
+0060:  jmp	894
+0064:  jmp	3202
+0068:  jmp	3118
+006c:  jmp	894
+0070:  jmp	894
+0074:  jmp	894
+0078:  jmp	894
+007c:  jmp	894
+0080:  jmp	894
+0084:  jmp	894
+0088:  jmp	894
+008c:  jmp	894
+0090:  jmp	894
+0094:  jmp	894
+0098:  jmp	894
+009c:  jmp	894
+00a0:  jmp	894
+00a4:  jmp	894
+00a8:  jmp	894
+00ac:  jmp	894
+00b0:  jmp	894
+00b4:  jmp	894
+00b8:  jmp	894
+00bc:  jmp	894
+00c0:  jmp	894
+00c4:  jmp	894
+00c8:  jmp	894
+00cc:  jmp	894
+00d0:  jmp	894
+00d4:  jmp	894
+00d8:  jmp	894
+00dc:  jmp	894
+00e0:  jmp	894
+00e4:  jmp	6724
+00e8:  jmp	6744
+00ec:  jmp	6692
+00f0:  jmp	6854
+00f4:  jmp	1632
+00f8:  jmp	1592
+00fc:  jmp	1612
+0100:  jmp	6632
+0104:  jmp	6894
+0108:  jmp	2106
+010c:  jmp	6612
+0110:  jmp	1570
+0114:  jmp	1550
+0118:  jmp	1680
+011c:  jmp	1562
+0120:  jmp	1660
+0124:  jmp	1624
+0128:  jmp	1640
+012c:  jmp	6914
+0130:  jmp	1586
+0134:  jmp	1426
+0138:  jmp	1604
+013c:  jmp	6764
+0140:  jmp	1218
+0144:  jmp	1106
+0148:  jmp	1078
+014c:  jmp	6672
+0150:  jmp	6834
+0154:  jmp	6622
+0158:  jmp	6708
+015c:  jmp	2114
+0160:  jmp	6874
+0164:  jmp	1008
+0168:  jmp	1578
+016c:  jmp	7194
+0170:  jmp	1038
+0174:  jmp	6652
+0178:  jmp	4306
+017c:  jmp	1652
+0180:  jmp	6814
+0184:  jmp	1668
+0188:  jmp	1678
+018c:  jmp	1688
+0190:  jmp	6784
+0194:  jmp	898
+0198:  sbc	r2, r31
+019a:  tst	r16
+019c:  tst	r16
+019e:  tst	r16
+01a0:  subi	r16, 192
+01a2:  and	r18, r19
+01a4:  and	r18, r19
+01a6:  ori	r21, 82
+01a8:  ori	r22, 193
+01aa:  ori	r21, 147
+01ac:  sbci	r22, 125
+01ae:  ori	r22, 21
+01b0:  and	r23, r18
+01b2:  nop
+01b4:  tst	r0
+01b6:  tst	r16
+01b8:  eor	r0, r16
+01ba:  or	r16, r0
+01bc:  mov	r0, r0
+01be:  mov	r16, r16
+01c0:  cpi	r16, 32
+01c2:  nop
+01c4:  cpc	r0, r17
+01c6:  sbc	r16, r1
+01c8:  clr	r0
+01ca:  clr	r16
+01cc:  or	r0, r16
+01ce:  mov	r16, r0
+01d0:  cpi	r16, 0
+01d2:  cpi	r16, 48
+01d4:  movw	r0, r0
+01d6:  cpc	r16, r17
+01d8:  sbc	r0, r17
+01da:  eor	r16, r0
+01dc:  or	r0, r0
+01de:  or	r16, r16
+01e0:  mov	r0, r16
+01e2:  cpi	r16, 16
+01e4:  cpi	r16, 64
+01e6:  muls	r16, r16
+01e8:  sbc	r0, r1
+01ea:  sbc	r16, r17
+01ec:  cpc	r16, r1
+01ee:  cpc	r16, r5
+01f0:  cpc	r16, r21
+01f2:  sbc	r0, r5
+01f4:  sbc	r0, r8
+01f6:  muls	r16, r24
+01f8:  muls	r16, r18
+01fa:  sbc	r0, r18
+01fc:  sbc	r0, r10
+01fe:  cpc	r0, r8
+0200:  cpc	r0, r4
+0202:  movw	r0, r8
+0204:  movw	r0, r2
+0206:  movw	r0, r2
+0208:  movw	r0, r2
+020a:  mulsu	r16, r17
+020c:  mulsu	r16, r19
+020e:  mulsu	r16, r19
+0210:  mulsu	r16, r19
+0212:  cpc	r0, r3
+0214:  cpc	r16, r23
+0216:  add	r0, r7
+0218:  add	r0, r12
+021a:  add	r0, r12
+021c:  add	r0, r12
+021e:  muls	r16, r28
+0220:  muls	r16, r18
+0222:  cpc	r0, r18
+0224:  cpc	r0, r22
+0226:  cpc	r0, r22
+0228:  cpc	r0, r22
+022a:  sbc	r16, r22
+022c:  sbc	r16, r27
+022e:  sbc	r16, r27
+0230:  sbc	r16, r27
+0232:  movw	r0, r22
+0234:  cpse	r0, r2
+0236:  and	r2, r0
+0238:  sbc	r0, r8
+023a:  and	r1, r0
+023c:  cpse	r4, r0
+023e:  sbci	r18, 0
+0240:  muls	r24, r16
+0242:  muls	r16, r17
+0244:  sbc	r0, r1
+0246:  muls	r16, r20
+0248:  movw	r0, r2
+024a:  cpc	r0, r2
+024c:  cpse	r0, r8
+024e:  sbci	r18, 0
+0250:  ldd	r8, Z+0
+0252:  and	r4, r0
+0254:  sbc	r1, r0
+0256:  muls	r16, r20
+0258:  ldd	r0, Z+1
+025a:  muls	r16, r20
+025c:  ldd	r0, Z+1
+025e:  and	r4, r0
+0260:  sbc	r1, r0
+0262:  muls	r16, r20
+0264:  sbc	r0, r1
+0266:  muls	r16, r20
+0268:  movw	r0, r2
+026a:  cpc	r0, r2
+026c:  cpse	r0, r8
+026e:  sbci	r18, 0
+0270:  movw	r16, r0
+0272:  cpc	r0, r2
+0274:  cpse	r0, r8
+0276:  sbci	r18, 0
+0278:  mov	r24, r16
+027a:  and	r21, r28
+027c:  and	r18, r19
+027e:  subi	r18, 35
+0280:  ori	r22, 21
+0282:  subi	r22, 60
+0284:  ori	r22, 217
+0286:  ori	r20, 87
+0288:  andi	r22, 33
+028a:  sbc	r16, r26
+028c:  sbc	r16, r2
+028e:  add	r16, r12
+0290:  sbc	r0, r14
+0292:  mulsu	r16, r23
+0294:  movw	r0, r8
+0296:  nop
+0298:  nop
+029a:  nop
+029c:  nop
+029e:  nop
+02a0:  nop
+02a2:  nop
+02a4:  nop
+02a6:  nop
+02a8:  nop
+02aa:  nop
+02ac:  nop
+02ae:  nop
+02b0:  nop
+02b2:  nop
+02b4:  cpse	r17, r2
+02b6:  nop
+02b8:  nop
+02ba:  nop
+02bc:  nop
+02be:  nop
+02c0:  nop
+02c2:  nop
+02c4:  nop
+02c6:  nop
+02c8:  nop
+02ca:  tst	r16
+02cc:  tst	r16
+02ce:  tst	r16
+02d0:  subi	r16, 192
+02d2:  and	r18, r19
+02d4:  and	r18, r19
+02d6:  ori	r21, 82
+02d8:  ori	r22, 193
+02da:  ori	r21, 147
+02dc:  sbci	r22, 125
+02de:  ori	r22, 21
+02e0:  and	r23, r18
+02e2:  nop
+02e4:  sbc	r6, r9
+02e6:  add	r0, r29
+02e8:  clr	r1
+02ea:  out	63, r1
+02ec:  ldi	r28, 255
+02ee:  ldi	r29, 33
+02f0:  out	62, r29
+02f2:  out	61, r28
+02f4:  ldi	r16, 0
+02f6:  out	60, r16
+02f8:  ldi	r18, 7
+02fa:  ldi	r26, 34
+02fc:  ldi	r27, 4
+02fe:  rjmp	.+2
+0300:  st	X+, r1
+0302:  cpi	r26, 27
+0304:  cpc	r27, r18
+0306:  brne	.-8
+0308:  ldi	r17, 4
+030a:  ldi	r26, 0
+030c:  ldi	r27, 2
+030e:  ldi	r30, 122
+0310:  ldi	r31, 33
+0312:  ldi	r16, 0
+0314:  out	59, r16
+0316:  rjmp	.+4
+0318:  elpm	r0, Z+
+031a:  st	X+, r0
+031c:  cpi	r26, 34
+031e:  cpc	r27, r17
+0320:  brne	.-10
+0322:  ldi	r17, 1
+0324:  ldi	r28, 141
+0326:  ldi	r29, 1
+0328:  ldi	r16, 0
+032a:  rjmp	.+12
+032c:  sbiw	r28, 1
+032e:  sbc	r16, r1
+0330:  mov	r24, r16
+0332:  movw	r30, r28
+0334:  call	7424
+0338:  cpi	r28, 140
+033a:  cpc	r29, r17
+033c:  ldi	r24, 0
+033e:  cpc	r16, r24
+0340:  brne	.-22
+0342:  call	4684
+0346:  jmp	8534
+034a:  jmp	0
+034e:  push	r10
+0350:  push	r11
+0352:  push	r12
+0354:  push	r13
+0356:  push	r14
+0358:  push	r15
+035a:  push	r16
+035c:  push	r17
+035e:  push	r28
+0360:  push	r29
+0362:  movw	r12, r24
+0364:  movw	r14, r22
+0366:  movw	r16, r22
+0368:  add	r16, r20
+036a:  adc	r17, r21
+036c:  movw	r28, r22
+036e:  movw	r10, r28
+0370:  sub	r10, r14
+0372:  sbc	r11, r15
+0374:  cp	r28, r16
+0376:  cpc	r29, r17
+0378:  breq	.+22
+037a:  ld	r22, Y+
+037c:  movw	r26, r12
+037e:  ld	r30, X+
+0380:  ld	r31, X
+0382:  ld	r0, Z+
+0384:  ldd	r31, Z+0
+0386:  mov	r30, r0
+0388:  movw	r24, r12
+038a:  eicall
+038c:  or	r24, r25
+038e:  brne	.-34
+0390:  movw	r24, r10
+0392:  pop	r29
+0394:  pop	r28
+0396:  pop	r17
+0398:  pop	r16
+039a:  pop	r15
+039c:  pop	r14
+039e:  pop	r13
+03a0:  pop	r12
+03a2:  pop	r11
+03a4:  pop	r10
+03a6:  ret
+03a8:  ldi	r30, 83
+03aa:  ldi	r31, 5
+03ac:  ldd	r20, Z+4
+03ae:  ldd	r21, Z+5
+03b0:  ldd	r22, Z+0
+03b2:  ldd	r23, Z+1
+03b4:  ldi	r24, 167
+03b6:  ldi	r25, 4
+03b8:  jmp	898
+03bc:  movw	r30, r24
+03be:  ldd	r21, Z+27
+03c0:  ldd	r20, Z+28
+03c2:  mov	r18, r21
+03c4:  ldi	r19, 0
+03c6:  mov	r24, r20
+03c8:  ldi	r25, 0
+03ca:  sub	r24, r18
+03cc:  sbc	r25, r19
+03ce:  cp	r21, r20
+03d0:  brlo	.+4
+03d2:  adiw	r24, 63
+03d4:  ret
+03d6:  sbiw	r24, 1
+03d8:  ret
+03da:  movw	r30, r24
+03dc:  ldd	r25, Z+25
+03de:  ldd	r24, Z+26
+03e0:  cp	r25, r24
+03e2:  breq	.+24
+03e4:  ldd	r26, Z+26
+03e6:  add	r26, r30
+03e8:  mov	r27, r31
+03ea:  adc	r27, r1
+03ec:  adiw	r26, 29
+03ee:  ld	r24, X
+03f0:  ldd	r25, Z+26
+03f2:  subi	r25, 255
+03f4:  andi	r25, 63
+03f6:  std	Z+26, r25
+03f8:  ldi	r25, 0
+03fa:  ret
+03fc:  ldi	r24, 255
+03fe:  ldi	r25, 255
+0400:  ret
+0402:  movw	r30, r24
+0404:  ldd	r25, Z+25
+0406:  ldd	r24, Z+26
+0408:  cp	r25, r24
+040a:  breq	.+12
+040c:  ldd	r24, Z+26
+040e:  add	r30, r24
+0410:  adc	r31, r1
+0412:  ldd	r24, Z+29
+0414:  ldi	r25, 0
+0416:  ret
+0418:  ldi	r24, 255
+041a:  ldi	r25, 255
+041c:  ret
+041e:  movw	r30, r24
+0420:  ldd	r25, Z+25
+0422:  ldd	r18, Z+26
+0424:  mov	r24, r25
+0426:  ldi	r25, 0
+0428:  subi	r24, 192
+042a:  sbci	r25, 255
+042c:  sub	r24, r18
+042e:  sbc	r25, r1
+0430:  andi	r24, 63
+0432:  clr	r25
+0434:  ret
+0436:  ldi	r24, 167
+0438:  ldi	r25, 4
+043a:  call	1106
+043e:  ldi	r18, 1
+0440:  or	r24, r25
+0442:  brne	.+2
+0444:  ldi	r18, 0
+0446:  mov	r24, r18
+0448:  ret
+044a:  movw	r30, r24
+044c:  ldd	r26, Z+28
+044e:  add	r26, r24
+0450:  mov	r27, r25
+0452:  adc	r27, r1
+0454:  subi	r26, 163
+0456:  sbci	r27, 255
+0458:  ld	r18, X
+045a:  ldd	r24, Z+28
+045c:  ldi	r25, 0
+045e:  adiw	r24, 1
+0460:  andi	r24, 63
+0462:  clr	r25
+0464:  std	Z+28, r24
+0466:  ldd	r26, Z+22
+0468:  ldd	r27, Z+23
+046a:  st	X, r18
+046c:  ldd	r26, Z+16
+046e:  ldd	r27, Z+17
+0470:  ld	r24, X
+0472:  andi	r24, 3
+0474:  ori	r24, 64
+0476:  st	X, r24
+0478:  ldd	r25, Z+27
+047a:  ldd	r24, Z+28
+047c:  cpse	r25, r24
+047e:  rjmp	.+12
+0480:  ldd	r0, Z+18
+0482:  ldd	r31, Z+19
+0484:  mov	r30, r0
+0486:  ldd	r24, Z+0
+0488:  andi	r24, 223
+048a:  std	Z+0, r24
+048c:  ret
+048e:  push	r14
+0490:  push	r15
+0492:  push	r16
+0494:  push	r17
+0496:  push	r28
+0498:  push	r29
+049a:  movw	r28, r24
+049c:  ldi	r24, 1
+049e:  std	Y+24, r24
+04a0:  ldd	r25, Y+27
+04a2:  ldd	r24, Y+28
+04a4:  cpse	r25, r24
+04a6:  rjmp	.+52
+04a8:  ldd	r30, Y+16
+04aa:  ldd	r31, Y+17
+04ac:  ldd	r24, Z+0
+04ae:  sbrs	r24, 5
+04b0:  rjmp	.+42
+04b2:  in	r25, 63
+04b4:  cli
+04b6:  ldd	r30, Y+22
+04b8:  ldd	r31, Y+23
+04ba:  std	Z+0, r22
+04bc:  ldd	r30, Y+16
+04be:  ldd	r31, Y+17
+04c0:  ldd	r24, Z+0
+04c2:  andi	r24, 3
+04c4:  ori	r24, 64
+04c6:  std	Z+0, r24
+04c8:  out	63, r25
+04ca:  ldi	r24, 1
+04cc:  ldi	r25, 0
+04ce:  pop	r29
+04d0:  pop	r28
+04d2:  pop	r17
+04d4:  pop	r16
+04d6:  pop	r15
+04d8:  pop	r14
+04da:  ret
+04dc:  mov	r15, r22
+04de:  ldd	r16, Y+27
+04e0:  ldi	r17, 0
+04e2:  subi	r16, 255
+04e4:  sbci	r17, 255
+04e6:  andi	r16, 63
+04e8:  clr	r17
+04ea:  mov	r14, r16
+04ec:  ldd	r24, Y+28
+04ee:  cpse	r24, r14
+04f0:  rjmp	.+24
+04f2:  in	r0, 63
+04f4:  sbrc	r0, 7
+04f6:  rjmp	.-12
+04f8:  ldd	r30, Y+16
+04fa:  ldd	r31, Y+17
+04fc:  ldd	r24, Z+0
+04fe:  sbrs	r24, 5
+0500:  rjmp	.-22
+0502:  movw	r24, r28
+0504:  call	1150
+0508:  rjmp	.-30
+050a:  ldd	r30, Y+27
+050c:  add	r30, r28
+050e:  mov	r31, r29
+0510:  adc	r31, r1
+0512:  subi	r30, 163
+0514:  sbci	r31, 255
+0516:  std	Z+0, r15
+0518:  in	r25, 63
+051a:  cli
+051c:  std	Y+27, r16
+051e:  ldd	r30, Y+18
+0520:  ldd	r31, Y+19
+0522:  ldd	r24, Z+0
+0524:  ori	r24, 32
+0526:  rjmp	.-98
+0528:  push	r16
+052a:  push	r17
+052c:  push	r28
+052e:  push	r29
+0530:  movw	r16, r24
+0532:  ldi	r29, 0
+0534:  ldi	r28, 0
+0536:  movw	r30, r16
+0538:  add	r30, r28
+053a:  adc	r31, r29
+053c:  lpm	r22, Z
+053e:  tst	r22
+0540:  breq	.+16
+0542:  ldi	r24, 167
+0544:  ldi	r25, 4
+0546:  call	1218
+054a:  or	r24, r25
+054c:  breq	.+4
+054e:  adiw	r28, 1
+0550:  rjmp	.-28
+0552:  movw	r24, r28
+0554:  pop	r29
+0556:  pop	r28
+0558:  pop	r17
+055a:  pop	r16
+055c:  ret
+055e:  push	r28
+0560:  push	r29
+0562:  movw	r28, r24
+0564:  ldd	r24, Y+24
+0566:  tst	r24
+0568:  breq	.+46
+056a:  ldd	r26, Y+18
+056c:  ldd	r27, Y+19
+056e:  ldd	r30, Y+16
+0570:  ldd	r31, Y+17
+0572:  ld	r24, X
+0574:  sbrc	r24, 5
+0576:  rjmp	.+6
+0578:  ldd	r24, Z+0
+057a:  sbrc	r24, 6
+057c:  rjmp	.+26
+057e:  in	r0, 63
+0580:  sbrc	r0, 7
+0582:  rjmp	.-18
+0584:  ld	r24, X
+0586:  sbrs	r24, 5
+0588:  rjmp	.-28
+058a:  ldd	r24, Z+0
+058c:  sbrs	r24, 5
+058e:  rjmp	.-38
+0590:  movw	r24, r28
+0592:  call	1150
+0596:  rjmp	.-46
+0598:  pop	r29
+059a:  pop	r28
+059c:  ret
+059e:  subi	r24, 1
+05a0:  cpi	r24, 18
+05a2:  brlo	.+2
+05a4:  rjmp	.+180
+05a6:  mov	r30, r24
+05a8:  ldi	r31, 0
+05aa:  clr	r24
+05ac:  subi	r30, 11
+05ae:  sbci	r31, 253
+05b0:  sbci	r24, 255
+05b2:  jmp	7424
+05b6:  mulsu	r17, r21
+05b8:  fmul	r17, r17
+05ba:  mulsu	r16, r23
+05bc:  fmul	r16, r21
+05be:  mulsu	r17, r17
+05c0:  mulsu	r20, r23
+05c2:  fmul	r17, r20
+05c4:  mulsu	r18, r18
+05c6:  mulsu	r18, r22
+05c8:  fmul	r18, r20
+05ca:  mulsu	r19, r16
+05cc:  mulsu	r19, r20
+05ce:  fmul	r19, r18
+05d0:  fmul	r19, r22
+05d2:  mulsu	r20, r23
+05d4:  mulsu	r20, r18
+05d6:  fmul	r20, r16
+05d8:  fmul	r20, r20
+05da:  lds	r24, 128
+05de:  andi	r24, 127
+05e0:  sts	128, r24
+05e4:  ret
+05e6:  lds	r24, 128
+05ea:  andi	r24, 223
+05ec:  rjmp	.-14
+05ee:  lds	r24, 128
+05f2:  andi	r24, 247
+05f4:  rjmp	.-22
+05f6:  in	r24, 36
+05f8:  andi	r24, 127
+05fa:  out	36, r24
+05fc:  ret
+05fe:  in	r24, 36
+0600:  andi	r24, 223
+0602:  rjmp	.-10
+0604:  lds	r24, 176
+0608:  andi	r24, 127
+060a:  sts	176, r24
+060e:  ret
+0610:  lds	r24, 176
+0614:  andi	r24, 223
+0616:  rjmp	.-14
+0618:  lds	r24, 144
+061c:  andi	r24, 127
+061e:  sts	144, r24
+0622:  ret
+0624:  lds	r24, 144
+0628:  andi	r24, 223
+062a:  rjmp	.-14
+062c:  lds	r24, 144
+0630:  andi	r24, 247
+0632:  rjmp	.-22
+0634:  lds	r24, 160
+0638:  andi	r24, 127
+063a:  sts	160, r24
+063e:  ret
+0640:  lds	r24, 160
+0644:  andi	r24, 223
+0646:  rjmp	.-14
+0648:  lds	r24, 160
+064c:  andi	r24, 247
+064e:  rjmp	.-22
+0650:  lds	r24, 288
+0654:  andi	r24, 127
+0656:  sts	288, r24
+065a:  ret
+065c:  lds	r24, 288
+0660:  andi	r24, 223
+0662:  rjmp	.-14
+0664:  lds	r24, 288
+0668:  andi	r24, 247
+066a:  rjmp	.-22
+066c:  push	r17
+066e:  push	r28
+0670:  push	r29
+0672:  mov	r18, r24
+0674:  ldi	r19, 0
+0676:  movw	r30, r18
+0678:  subi	r30, 88
+067a:  sbci	r31, 253
+067c:  lpm	r24, Z
+067e:  movw	r30, r18
+0680:  subi	r30, 185
+0682:  sbci	r31, 253
+0684:  lpm	r29, Z
+0686:  movw	r30, r18
+0688:  subi	r30, 255
+068a:  sbci	r31, 253
+068c:  lpm	r28, Z
+068e:  tst	r28
+0690:  breq	.+42
+0692:  mov	r17, r22
+0694:  cpse	r24, r1
+0696:  call	1490
+069a:  mov	r30, r28
+069c:  ldi	r31, 0
+069e:  lsl	r30
+06a0:  rol	r31
+06a2:  subi	r30, 25
+06a4:  sbci	r31, 254
+06a6:  lpm	r26, Z+
+06a8:  lpm	r27, Z
+06aa:  in	r24, 63
+06ac:  cli
+06ae:  ld	r30, X
+06b0:  cpse	r17, r1
+06b2:  rjmp	.+16
+06b4:  com	r29
+06b6:  and	r29, r30
+06b8:  st	X, r29
+06ba:  out	63, r24
+06bc:  pop	r29
+06be:  pop	r28
+06c0:  pop	r17
+06c2:  ret
+06c4:  or	r29, r30
+06c6:  rjmp	.-16
+06c8:  push	r28
+06ca:  push	r29
+06cc:  ldi	r25, 0
+06ce:  movw	r30, r24
+06d0:  subi	r30, 185
+06d2:  sbci	r31, 253
+06d4:  lpm	r18, Z
+06d6:  subi	r24, 255
+06d8:  sbci	r25, 253
+06da:  movw	r30, r24
+06dc:  lpm	r24, Z
+06de:  tst	r24
+06e0:  breq	.+50
+06e2:  ldi	r25, 0
+06e4:  lsl	r24
+06e6:  rol	r25
+06e8:  movw	r30, r24
+06ea:  subi	r30, 51
+06ec:  sbci	r31, 254
+06ee:  lpm	r26, Z+
+06f0:  lpm	r27, Z
+06f2:  movw	r30, r24
+06f4:  subi	r30, 25
+06f6:  sbci	r31, 254
+06f8:  lpm	r28, Z+
+06fa:  lpm	r29, Z
+06fc:  cpse	r22, r1
+06fe:  rjmp	.+26
+0700:  in	r25, 63
+0702:  cli
+0704:  ld	r24, X
+0706:  com	r18
+0708:  and	r24, r18
+070a:  st	X, r24
+070c:  ldd	r24, Y+0
+070e:  and	r18, r24
+0710:  std	Y+0, r18
+0712:  out	63, r25
+0714:  pop	r29
+0716:  pop	r28
+0718:  ret
+071a:  cpi	r22, 2
+071c:  brne	.+20
+071e:  in	r25, 63
+0720:  cli
+0722:  ld	r19, X
+0724:  mov	r24, r18
+0726:  com	r24
+0728:  and	r24, r19
+072a:  st	X, r24
+072c:  ldd	r30, Y+0
+072e:  or	r18, r30
+0730:  rjmp	.-34
+0732:  in	r24, 63
+0734:  cli
+0736:  ld	r30, X
+0738:  or	r18, r30
+073a:  st	X, r18
+073c:  out	63, r24
+073e:  rjmp	.-44
+0740:  in	r19, 63
+0742:  cli
+0744:  lds	r24, 1177
+0748:  lds	r25, 1178
+074c:  lds	r26, 1179
+0750:  lds	r27, 1180
+0754:  in	r18, 38
+0756:  sbis	21, 0
+0758:  rjmp	.+10
+075a:  cpi	r18, 255
+075c:  breq	.+6
+075e:  adiw	r24, 1
+0760:  adc	r26, r1
+0762:  adc	r27, r1
+0764:  out	63, r19
+0766:  mov	r27, r26
+0768:  mov	r26, r25
+076a:  mov	r25, r24
+076c:  clr	r24
+076e:  movw	r22, r24
+0770:  movw	r24, r26
+0772:  add	r22, r18
+0774:  adc	r23, r1
+0776:  adc	r24, r1
+0778:  adc	r25, r1
+077a:  ldi	r20, 2
+077c:  lsl	r22
+077e:  rol	r23
+0780:  rol	r24
+0782:  rol	r25
+0784:  dec	r20
+0786:  brne	.-12
+0788:  ret
+078a:  push	r8
+078c:  push	r9
+078e:  push	r10
+0790:  push	r11
+0792:  push	r12
+0794:  push	r13
+0796:  push	r14
+0798:  push	r15
+079a:  movw	r8, r22
+079c:  movw	r10, r24
+079e:  call	1908
+07a2:  movw	r12, r22
+07a4:  movw	r14, r24
+07a6:  call	1908
+07aa:  sub	r22, r12
+07ac:  sbc	r23, r13
+07ae:  sbc	r24, r14
+07b0:  sbc	r25, r15
+07b2:  cpi	r22, 232
+07b4:  sbci	r23, 3
+07b6:  cpc	r24, r1
+07b8:  cpc	r25, r1
+07ba:  brlo	.-22
+07bc:  ldi	r18, 1
+07be:  sub	r8, r18
+07c0:  sbc	r9, r1
+07c2:  sbc	r10, r1
+07c4:  sbc	r11, r1
+07c6:  ldi	r24, 232
+07c8:  add	r12, r24
+07ca:  ldi	r24, 3
+07cc:  adc	r13, r24
+07ce:  adc	r14, r1
+07d0:  adc	r15, r1
+07d2:  cp	r8, r1
+07d4:  cpc	r9, r1
+07d6:  cpc	r10, r1
+07d8:  cpc	r11, r1
+07da:  brne	.-54
+07dc:  pop	r15
+07de:  pop	r14
+07e0:  pop	r13
+07e2:  pop	r12
+07e4:  pop	r11
+07e6:  pop	r10
+07e8:  pop	r9
+07ea:  pop	r8
+07ec:  ret
+07ee:  in	r18, 63
+07f0:  cli
+07f2:  lds	r22, 1173
+07f6:  lds	r23, 1174
+07fa:  lds	r24, 1175
+07fe:  lds	r25, 1176
+0802:  out	63, r18
+0804:  ret
+0806:  mov	r24, r22
+0808:  mov	r22, r20
+080a:  jmp	1788
+080e:  push	r28
+0810:  push	r29
+0812:  movw	r30, r24
+0814:  ldd	r18, Z+17
+0816:  ldi	r19, 0
+0818:  movw	r30, r18
+081a:  subi	r30, 88
+081c:  sbci	r31, 253
+081e:  lpm	r24, Z
+0820:  movw	r30, r18
+0822:  subi	r30, 185
+0824:  sbci	r31, 253
+0826:  lpm	r29, Z
+0828:  movw	r30, r18
+082a:  subi	r30, 255
+082c:  sbci	r31, 253
+082e:  lpm	r28, Z
+0830:  tst	r28
+0832:  breq	.+30
+0834:  cpse	r24, r1
+0836:  call	1490
+083a:  mov	r30, r28
+083c:  ldi	r31, 0
+083e:  lsl	r30
+0840:  rol	r31
+0842:  subi	r30, 77
+0844:  sbci	r31, 254
+0846:  lpm	r26, Z+
+0848:  lpm	r27, Z
+084a:  ld	r30, X
+084c:  and	r30, r29
+084e:  ldi	r24, 1
+0850:  brne	.+2
+0852:  ldi	r24, 0
+0854:  andi	r24, 1
+0856:  pop	r29
+0858:  pop	r28
+085a:  ret
+085c:  movw	r26, r24
+085e:  ld	r30, X+
+0860:  ld	r31, X+
+0862:  ldd	r24, Z+0
+0864:  ld	r30, X+
+0866:  ld	r31, X+
+0868:  ldd	r25, Z+0
+086a:  ld	r30, X+
+086c:  ld	r31, X+
+086e:  ld	r22, X
+0870:  andi	r22, 3
+0872:  and	r24, r30
+0874:  breq	.+2
+0876:  ori	r22, 4
+0878:  and	r25, r31
+087a:  breq	.+2
+087c:  ori	r22, 8
+087e:  ldi	r30, 101
+0880:  ldi	r31, 4
+0882:  add	r30, r22
+0884:  adc	r31, r1
+0886:  asr	r22
+0888:  asr	r22
+088a:  st	X+, r22
+088c:  ld	r22, X+
+088e:  ld	r23, X+
+0890:  ld	r24, X+
+0892:  ld	r25, X+
+0894:  ijmp
+0896:  rjmp	.+70
+0898:  rjmp	.+52
+089a:  rjmp	.+36
+089c:  rjmp	.+44
+089e:  rjmp	.+32
+08a0:  rjmp	.+60
+08a2:  rjmp	.+18
+08a4:  rjmp	.+40
+08a6:  rjmp	.+38
+08a8:  rjmp	.+12
+08aa:  rjmp	.+50
+08ac:  rjmp	.+18
+08ae:  rjmp	.+26
+08b0:  rjmp	.+14
+08b2:  rjmp	.+26
+08b4:  rjmp	.+40
+08b6:  subi	r22, 2
+08b8:  sbci	r23, 0
+08ba:  sbci	r24, 0
+08bc:  sbci	r25, 0
+08be:  rjmp	.+22
+08c0:  subi	r22, 1
+08c2:  sbci	r23, 0
+08c4:  sbci	r24, 0
+08c6:  sbci	r25, 0
+08c8:  rjmp	.+12
+08ca:  subi	r22, 254
+08cc:  rjmp	.+2
+08ce:  subi	r22, 255
+08d0:  sbci	r23, 255
+08d2:  sbci	r24, 255
+08d4:  sbci	r25, 255
+08d6:  st	-X, r25
+08d8:  st	-X, r24
+08da:  st	-X, r23
+08dc:  st	-X, r22
+08de:  ret
+08e0:  push	r28
+08e2:  push	r29
+08e4:  movw	r28, r24
+08e6:  ldd	r24, Y+11
+08e8:  cpi	r24, 2
+08ea:  brsh	.+24
+08ec:  cli
+08ee:  movw	r24, r28
+08f0:  call	2192
+08f4:  ldd	r22, Y+7
+08f6:  ldd	r23, Y+8
+08f8:  ldd	r24, Y+9
+08fa:  ldd	r25, Y+10
+08fc:  sei
+08fe:  pop	r29
+0900:  pop	r28
+0902:  ret
+0904:  cli
+0906:  rjmp	.-20
+0908:  push	r8
+090a:  push	r9
+090c:  push	r10
+090e:  push	r11
+0910:  push	r16
+0912:  push	r17
+0914:  push	r28
+0916:  push	r29
+0918:  in	r28, 61
+091a:  in	r29, 62
+091c:  sbiw	r28, 33
+091e:  in	r0, 63
+0920:  cli
+0922:  out	62, r29
+0924:  out	63, r0
+0926:  out	61, r28
+0928:  std	Y+33, r1
+092a:  cpi	r20, 2
+092c:  brsh	.+2
+092e:  ldi	r20, 10
+0930:  movw	r16, r28
+0932:  subi	r16, 223
+0934:  sbci	r17, 255
+0936:  mov	r8, r20
+0938:  mov	r9, r1
+093a:  mov	r11, r1
+093c:  mov	r10, r1
+093e:  movw	r20, r10
+0940:  movw	r18, r8
+0942:  call	7294
+0946:  mov	r30, r22
+0948:  movw	r22, r18
+094a:  movw	r24, r20
+094c:  cpi	r30, 10
+094e:  brge	.+80
+0950:  subi	r30, 208
+0952:  movw	r26, r16
+0954:  st	-X, r30
+0956:  movw	r16, r26
+0958:  or	r18, r19
+095a:  or	r18, r20
+095c:  or	r18, r21
+095e:  brne	.-34
+0960:  ldi	r25, 0
+0962:  ldi	r24, 0
+0964:  sbiw	r26, 0
+0966:  breq	.+26
+0968:  movw	r30, r26
+096a:  ld	r0, Z+
+096c:  tst	r0
+096e:  brne	.-6
+0970:  sbiw	r30, 1
+0972:  movw	r20, r30
+0974:  sub	r20, r26
+0976:  sbc	r21, r27
+0978:  movw	r22, r26
+097a:  ldi	r24, 167
+097c:  ldi	r25, 4
+097e:  call	898
+0982:  adiw	r28, 33
+0984:  in	r0, 63
+0986:  cli
+0988:  out	62, r29
+098a:  out	63, r0
+098c:  out	61, r28
+098e:  pop	r29
+0990:  pop	r28
+0992:  pop	r17
+0994:  pop	r16
+0996:  pop	r11
+0998:  pop	r10
+099a:  pop	r9
+099c:  pop	r8
+099e:  ret
+09a0:  subi	r30, 201
+09a2:  rjmp	.-82
+09a4:  ldi	r20, 10
+09a6:  ldi	r22, 5
+09a8:  ldi	r23, 0
+09aa:  ldi	r24, 0
+09ac:  ldi	r25, 0
+09ae:  jmp	2364
+09b2:  sbiw	r24, 0
+09b4:  breq	.+26
+09b6:  movw	r30, r24
+09b8:  ld	r0, Z+
+09ba:  tst	r0
+09bc:  brne	.-6
+09be:  sbiw	r30, 1
+09c0:  movw	r20, r30
+09c2:  sub	r20, r24
+09c4:  sbc	r21, r25
+09c6:  movw	r22, r24
+09c8:  ldi	r24, 167
+09ca:  ldi	r25, 4
+09cc:  jmp	898
+09d0:  ldi	r25, 0
+09d2:  ldi	r24, 0
+09d4:  ret
+09d6:  push	r16
+09d8:  push	r17
+09da:  push	r28
+09dc:  push	r29
+09de:  ldi	r24, 167
+09e0:  ldi	r25, 4
+09e2:  call	1106
+09e6:  or	r24, r25
+09e8:  brne	.+2
+09ea:  rjmp	.+178
+09ec:  ldi	r24, 167
+09ee:  ldi	r25, 4
+09f0:  call	1038
+09f4:  cpi	r24, 124
+09f6:  brne	.+66
+09f8:  ldi	r24, 161
+09fa:  ldi	r25, 1
+09fc:  call	1372
+0a00:  ldi	r24, 186
+0a02:  ldi	r25, 2
+0a04:  call	2534
+0a08:  ldi	r24, 159
+0a0a:  ldi	r25, 1
+0a0c:  call	1372
+0a10:  call	2520
+0a14:  ldi	r24, 157
+0a16:  ldi	r25, 1
+0a18:  call	1372
+0a1c:  ldi	r24, 10
+0a1e:  ldi	r25, 2
+0a20:  call	2534
+0a24:  ldi	r24, 155
+0a26:  ldi	r25, 1
+0a28:  call	1372
+0a2c:  call	988
+0a30:  ldi	r24, 152
+0a32:  ldi	r25, 1
+0a34:  call	1372
+0a38:  rjmp	.-92
+0a3a:  cpi	r24, 60
+0a3c:  brne	.+10
+0a3e:  sts	1171, r1
+0a42:  sts	1170, r1
+0a46:  rjmp	.-106
+0a48:  cpi	r24, 10
+0a4a:  brne	.+46
+0a4c:  ldi	r28, 26
+0a4e:  ldi	r29, 2
+0a50:  ldi	r16, 46
+0a52:  ldi	r17, 4
+0a54:  ld	r24, Y+
+0a56:  ld	r25, Y+
+0a58:  sbiw	r24, 0
+0a5a:  breq	.+16
+0a5c:  movw	r30, r16
+0a5e:  ldd	r18, Z+0
+0a60:  ldi	r22, 1
+0a62:  cpi	r18, 49
+0a64:  breq	.+2
+0a66:  ldi	r22, 0
+0a68:  call	1696
+0a6c:  subi	r16, 255
+0a6e:  sbci	r17, 255
+0a70:  ldi	r31, 2
+0a72:  cpi	r28, 68
+0a74:  cpc	r29, r31
+0a76:  brne	.-36
+0a78:  rjmp	.-60
+0a7a:  lds	r18, 1170
+0a7e:  lds	r19, 1171
+0a82:  cpi	r18, 100
+0a84:  cpc	r19, r1
+0a86:  brge	.-74
+0a88:  movw	r30, r18
+0a8a:  subi	r30, 210
+0a8c:  sbci	r31, 251
+0a8e:  std	Z+0, r24
+0a90:  subi	r18, 255
+0a92:  sbci	r19, 255
+0a94:  sts	1171, r19
+0a98:  sts	1170, r18
+0a9c:  rjmp	.-192
+0a9e:  pop	r29
+0aa0:  pop	r28
+0aa2:  pop	r17
+0aa4:  pop	r16
+0aa6:  ret
+0aa8:  call	1130
+0aac:  cpse	r24, r1
+0aae:  call	2570
+0ab2:  ldi	r24, 0
+0ab4:  ldi	r25, 0
+0ab6:  or	r24, r25
+0ab8:  breq	.+18
+0aba:  ldi	r24, 0
+0abc:  ldi	r25, 0
+0abe:  or	r24, r25
+0ac0:  breq	.+10
+0ac2:  call	0
+0ac6:  cpse	r24, r1
+0ac8:  call	0
+0acc:  ldi	r24, 0
+0ace:  ldi	r25, 0
+0ad0:  or	r24, r25
+0ad2:  breq	.+18
+0ad4:  ldi	r24, 0
+0ad6:  ldi	r25, 0
+0ad8:  or	r24, r25
+0ada:  breq	.+10
+0adc:  call	0
+0ae0:  cpse	r24, r1
+0ae2:  call	0
+0ae6:  ldi	r24, 0
+0ae8:  ldi	r25, 0
+0aea:  or	r24, r25
+0aec:  breq	.+18
+0aee:  ldi	r24, 0
+0af0:  ldi	r25, 0
+0af2:  or	r24, r25
+0af4:  breq	.+10
+0af6:  call	0
+0afa:  cpse	r24, r1
+0afc:  jmp	0
+0b00:  ret
+0b02:  call	8476
+0b06:  push	r16
+0b08:  push	r17
+0b0a:  push	r28
+0b0c:  push	r29
+0b0e:  movw	r28, r24
+0b10:  ldd	r24, Y+0
+0b12:  ldd	r25, Y+1
+0b14:  sbiw	r24, 0
+0b16:  breq	.+22
+0b18:  ldd	r18, Y+2
+0b1a:  ldd	r19, Y+3
+0b1c:  cp	r18, r22
+0b1e:  cpc	r19, r23
+0b20:  brlo	.+12
+0b22:  ldi	r24, 1
+0b24:  pop	r29
+0b26:  pop	r28
+0b28:  pop	r17
+0b2a:  pop	r16
+0b2c:  ret
+0b2e:  movw	r16, r22
+0b30:  subi	r22, 255
+0b32:  sbci	r23, 255
+0b34:  call	8026
+0b38:  sbiw	r24, 0
+0b3a:  breq	.+22
+0b3c:  std	Y+1, r25
+0b3e:  std	Y+0, r24
+0b40:  std	Y+3, r17
+0b42:  std	Y+2, r16
+0b44:  ldd	r18, Y+4
+0b46:  ldd	r19, Y+5
+0b48:  or	r18, r19
+0b4a:  brne	.-42
+0b4c:  movw	r30, r24
+0b4e:  std	Z+0, r1
+0b50:  rjmp	.-48
+0b52:  ldi	r24, 0
+0b54:  rjmp	.-50
+0b56:  push	r28
+0b58:  push	r29
+0b5a:  movw	r28, r24
+0b5c:  ldd	r24, Y+0
+0b5e:  ldd	r25, Y+1
+0b60:  sbiw	r24, 0
+0b62:  breq	.+4
+0b64:  call	7752
+0b68:  std	Y+1, r1
+0b6a:  std	Y+0, r1
+0b6c:  std	Y+5, r1
+0b6e:  std	Y+4, r1
+0b70:  std	Y+3, r1
+0b72:  std	Y+2, r1
+0b74:  pop	r29
+0b76:  pop	r28
+0b78:  ret
+0b7a:  push	r14
+0b7c:  push	r15
+0b7e:  push	r16
+0b80:  push	r17
+0b82:  push	r28
+0b84:  push	r29
+0b86:  movw	r28, r24
+0b88:  movw	r14, r22
+0b8a:  movw	r16, r20
+0b8c:  movw	r22, r20
+0b8e:  call	2874
+0b92:  cpse	r24, r1
+0b94:  rjmp	.+22
+0b96:  movw	r24, r28
+0b98:  call	2954
+0b9c:  movw	r24, r28
+0b9e:  pop	r29
+0ba0:  pop	r28
+0ba2:  pop	r17
+0ba4:  pop	r16
+0ba6:  pop	r15
+0ba8:  pop	r14
+0baa:  ret
+0bac:  std	Y+5, r17
+0bae:  std	Y+4, r16
+0bb0:  movw	r22, r14
+0bb2:  ldd	r24, Y+0
+0bb4:  ldd	r25, Y+1
+0bb6:  call	8520
+0bba:  rjmp	.-32
+0bbc:  push	r28
+0bbe:  push	r29
+0bc0:  movw	r28, r24
+0bc2:  movw	r30, r22
+0bc4:  cp	r24, r22
+0bc6:  cpc	r25, r23
+0bc8:  breq	.+18
+0bca:  ldd	r22, Z+0
+0bcc:  ldd	r23, Z+1
+0bce:  cp	r22, r1
+0bd0:  cpc	r23, r1
+0bd2:  breq	.+16
+0bd4:  ldd	r20, Z+4
+0bd6:  ldd	r21, Z+5
+0bd8:  call	2990
+0bdc:  movw	r24, r28
+0bde:  pop	r29
+0be0:  pop	r28
+0be2:  ret
+0be4:  call	2954
+0be8:  rjmp	.-14
+0bea:  movw	r30, r24
+0bec:  ldd	r24, Z+0
+0bee:  ldd	r25, Z+1
+0bf0:  sbiw	r24, 0
+0bf2:  breq	.+4
+0bf4:  jmp	7752
+0bf8:  ret
+0bfa:  push	r1
+0bfc:  push	r0
+0bfe:  in	r0, 63
+0c00:  push	r0
+0c02:  clr	r1
+0c04:  in	r0, 59
+0c06:  push	r0
+0c08:  push	r18
+0c0a:  push	r19
+0c0c:  push	r20
+0c0e:  push	r21
+0c10:  push	r22
+0c12:  push	r23
+0c14:  push	r24
+0c16:  push	r25
+0c18:  push	r26
+0c1a:  push	r27
+0c1c:  push	r30
+0c1e:  push	r31
+0c20:  ldi	r24, 167
+0c22:  ldi	r25, 4
+0c24:  call	1150
+0c28:  pop	r31
+0c2a:  pop	r30
+0c2c:  pop	r27
+0c2e:  pop	r26
+0c30:  pop	r25
+0c32:  pop	r24
+0c34:  pop	r23
+0c36:  pop	r22
+0c38:  pop	r21
+0c3a:  pop	r20
+0c3c:  pop	r19
+0c3e:  pop	r18
+0c40:  pop	r0
+0c42:  out	59, r0
+0c44:  pop	r0
+0c46:  out	63, r0
+0c48:  pop	r0
+0c4a:  pop	r1
+0c4c:  reti
+0c4e:  push	r1
+0c50:  push	r0
+0c52:  in	r0, 63
+0c54:  push	r0
+0c56:  clr	r1
+0c58:  in	r0, 59
+0c5a:  push	r0
+0c5c:  push	r18
+0c5e:  push	r24
+0c60:  push	r25
+0c62:  push	r30
+0c64:  push	r31
+0c66:  lds	r30, 1207
+0c6a:  lds	r31, 1208
+0c6e:  ldd	r24, Z+0
+0c70:  lds	r30, 1213
+0c74:  lds	r31, 1214
+0c78:  sbrc	r24, 2
+0c7a:  rjmp	.+58
+0c7c:  ldd	r25, Z+0
+0c7e:  lds	r24, 1216
+0c82:  subi	r24, 255
+0c84:  andi	r24, 63
+0c86:  lds	r18, 1217
+0c8a:  cp	r24, r18
+0c8c:  breq	.+16
+0c8e:  lds	r30, 1216
+0c92:  ldi	r31, 0
+0c94:  subi	r30, 89
+0c96:  sbci	r31, 251
+0c98:  std	Z+29, r25
+0c9a:  sts	1216, r24
+0c9e:  pop	r31
+0ca0:  pop	r30
+0ca2:  pop	r25
+0ca4:  pop	r24
+0ca6:  pop	r18
+0ca8:  pop	r0
+0caa:  out	59, r0
+0cac:  pop	r0
+0cae:  out	63, r0
+0cb0:  pop	r0
+0cb2:  pop	r1
+0cb4:  reti
+0cb6:  ldd	r24, Z+0
+0cb8:  rjmp	.-28
+0cba:  push	r1
+0cbc:  push	r0
+0cbe:  in	r0, 63
+0cc0:  push	r0
+0cc2:  clr	r1
+0cc4:  push	r18
+0cc6:  push	r19
+0cc8:  push	r24
+0cca:  push	r25
+0ccc:  push	r26
+0cce:  push	r27
+0cd0:  lds	r24, 1173
+0cd4:  lds	r25, 1174
+0cd8:  lds	r26, 1175
+0cdc:  lds	r27, 1176
+0ce0:  lds	r19, 1172
+0ce4:  ldi	r18, 3
+0ce6:  add	r18, r19
+0ce8:  cpi	r18, 125
+0cea:  brsh	.+86
+0cec:  adiw	r24, 1
+0cee:  adc	r26, r1
+0cf0:  adc	r27, r1
+0cf2:  sts	1172, r18
+0cf6:  sts	1173, r24
+0cfa:  sts	1174, r25
+0cfe:  sts	1175, r26
+0d02:  sts	1176, r27
+0d06:  lds	r24, 1177
+0d0a:  lds	r25, 1178
+0d0e:  lds	r26, 1179
+0d12:  lds	r27, 1180
+0d16:  adiw	r24, 1
+0d18:  adc	r26, r1
+0d1a:  adc	r27, r1
+0d1c:  sts	1177, r24
+0d20:  sts	1178, r25
+0d24:  sts	1179, r26
+0d28:  sts	1180, r27
+0d2c:  pop	r27
+0d2e:  pop	r26
+0d30:  pop	r25
+0d32:  pop	r24
+0d34:  pop	r19
+0d36:  pop	r18
+0d38:  pop	r0
+0d3a:  out	63, r0
+0d3c:  pop	r0
+0d3e:  pop	r1
+0d40:  reti
+0d42:  ldi	r18, 134
+0d44:  add	r18, r19
+0d46:  adiw	r24, 2
+0d48:  adc	r26, r1
+0d4a:  adc	r27, r1
+0d4c:  rjmp	.-92
+0d4e:  push	r1
+0d50:  push	r0
+0d52:  in	r0, 63
+0d54:  push	r0
+0d56:  clr	r1
+0d58:  in	r0, 59
+0d5a:  push	r0
+0d5c:  push	r18
+0d5e:  push	r19
+0d60:  push	r20
+0d62:  push	r21
+0d64:  push	r22
+0d66:  push	r23
+0d68:  push	r24
+0d6a:  push	r25
+0d6c:  push	r26
+0d6e:  push	r27
+0d70:  push	r30
+0d72:  push	r31
+0d74:  lds	r24, 1060
+0d78:  lds	r25, 1061
+0d7c:  call	2192
+0d80:  pop	r31
+0d82:  pop	r30
+0d84:  pop	r27
+0d86:  pop	r26
+0d88:  pop	r25
+0d8a:  pop	r24
+0d8c:  pop	r23
+0d8e:  pop	r22
+0d90:  pop	r21
+0d92:  pop	r20
+0d94:  pop	r19
+0d96:  pop	r18
+0d98:  pop	r0
+0d9a:  out	59, r0
+0d9c:  pop	r0
+0d9e:  out	63, r0
+0da0:  pop	r0
+0da2:  pop	r1
+0da4:  reti
+0da6:  push	r1
+0da8:  push	r0
+0daa:  in	r0, 63
+0dac:  push	r0
+0dae:  clr	r1
+0db0:  in	r0, 59
+0db2:  push	r0
+0db4:  push	r18
+0db6:  push	r19
+0db8:  push	r20
+0dba:  push	r21
+0dbc:  push	r22
+0dbe:  push	r23
+0dc0:  push	r24
+0dc2:  push	r25
+0dc4:  push	r26
+0dc6:  push	r27
+0dc8:  push	r30
+0dca:  push	r31
+0dcc:  lds	r24, 1058
+0dd0:  lds	r25, 1059
+0dd4:  call	2192
+0dd8:  pop	r31
+0dda:  pop	r30
+0ddc:  pop	r27
+0dde:  pop	r26
+0de0:  pop	r25
+0de2:  pop	r24
+0de4:  pop	r23
+0de6:  pop	r22
+0de8:  pop	r21
+0dea:  pop	r20
+0dec:  pop	r19
+0dee:  pop	r18
+0df0:  pop	r0
+0df2:  out	59, r0
+0df4:  pop	r0
+0df6:  out	63, r0
+0df8:  pop	r0
+0dfa:  pop	r1
+0dfc:  reti
+0dfe:  push	r1
+0e00:  push	r0
+0e02:  in	r0, 63
+0e04:  push	r0
+0e06:  clr	r1
+0e08:  in	r0, 59
+0e0a:  push	r0
+0e0c:  push	r18
+0e0e:  push	r19
+0e10:  push	r20
+0e12:  push	r21
+0e14:  push	r22
+0e16:  push	r23
+0e18:  push	r24
+0e1a:  push	r25
+0e1c:  push	r26
+0e1e:  push	r27
+0e20:  push	r30
+0e22:  push	r31
+0e24:  lds	r24, 1068
+0e28:  lds	r25, 1069
+0e2c:  call	2192
+0e30:  pop	r31
+0e32:  pop	r30
+0e34:  pop	r27
+0e36:  pop	r26
+0e38:  pop	r25
+0e3a:  pop	r24
+0e3c:  pop	r23
+0e3e:  pop	r22
+0e40:  pop	r21
+0e42:  pop	r20
+0e44:  pop	r19
+0e46:  pop	r18
+0e48:  pop	r0
+0e4a:  out	59, r0
+0e4c:  pop	r0
+0e4e:  out	63, r0
+0e50:  pop	r0
+0e52:  pop	r1
+0e54:  reti
+0e56:  push	r1
+0e58:  push	r0
+0e5a:  in	r0, 63
+0e5c:  push	r0
+0e5e:  clr	r1
+0e60:  in	r0, 59
+0e62:  push	r0
+0e64:  push	r18
+0e66:  push	r19
+0e68:  push	r20
+0e6a:  push	r21
+0e6c:  push	r22
+0e6e:  push	r23
+0e70:  push	r24
+0e72:  push	r25
+0e74:  push	r26
+0e76:  push	r27
+0e78:  push	r30
+0e7a:  push	r31
+0e7c:  lds	r24, 1066
+0e80:  lds	r25, 1067
+0e84:  call	2192
+0e88:  pop	r31
+0e8a:  pop	r30
+0e8c:  pop	r27
+0e8e:  pop	r26
+0e90:  pop	r25
+0e92:  pop	r24
+0e94:  pop	r23
+0e96:  pop	r22
+0e98:  pop	r21
+0e9a:  pop	r20
+0e9c:  pop	r19
+0e9e:  pop	r18
+0ea0:  pop	r0
+0ea2:  out	59, r0
+0ea4:  pop	r0
+0ea6:  out	63, r0
+0ea8:  pop	r0
+0eaa:  pop	r1
+0eac:  reti
+0eae:  push	r1
+0eb0:  push	r0
+0eb2:  in	r0, 63
+0eb4:  push	r0
+0eb6:  clr	r1
+0eb8:  in	r0, 59
+0eba:  push	r0
+0ebc:  push	r18
+0ebe:  push	r19
+0ec0:  push	r20
+0ec2:  push	r21
+0ec4:  push	r22
+0ec6:  push	r23
+0ec8:  push	r24
+0eca:  push	r25
+0ecc:  push	r26
+0ece:  push	r27
+0ed0:  push	r30
+0ed2:  push	r31
+0ed4:  lds	r24, 1064
+0ed8:  lds	r25, 1065
+0edc:  call	2192
+0ee0:  pop	r31
+0ee2:  pop	r30
+0ee4:  pop	r27
+0ee6:  pop	r26
+0ee8:  pop	r25
+0eea:  pop	r24
+0eec:  pop	r23
+0eee:  pop	r22
+0ef0:  pop	r21
+0ef2:  pop	r20
+0ef4:  pop	r19
+0ef6:  pop	r18
+0ef8:  pop	r0
+0efa:  out	59, r0
+0efc:  pop	r0
+0efe:  out	63, r0
+0f00:  pop	r0
+0f02:  pop	r1
+0f04:  reti
+0f06:  push	r1
+0f08:  push	r0
+0f0a:  in	r0, 63
+0f0c:  push	r0
+0f0e:  clr	r1
+0f10:  in	r0, 59
+0f12:  push	r0
+0f14:  push	r18
+0f16:  push	r19
+0f18:  push	r20
+0f1a:  push	r21
+0f1c:  push	r22
+0f1e:  push	r23
+0f20:  push	r24
+0f22:  push	r25
+0f24:  push	r26
+0f26:  push	r27
+0f28:  push	r30
+0f2a:  push	r31
+0f2c:  lds	r24, 1062
+0f30:  lds	r25, 1063
+0f34:  call	2192
+0f38:  pop	r31
+0f3a:  pop	r30
+0f3c:  pop	r27
+0f3e:  pop	r26
+0f40:  pop	r25
+0f42:  pop	r24
+0f44:  pop	r23
+0f46:  pop	r22
+0f48:  pop	r21
+0f4a:  pop	r20
+0f4c:  pop	r19
+0f4e:  pop	r18
+0f50:  pop	r0
+0f52:  out	59, r0
+0f54:  pop	r0
+0f56:  out	63, r0
+0f58:  pop	r0
+0f5a:  pop	r1
+0f5c:  reti
+0f5e:  ldi	r25, 0
+0f60:  cpi	r24, 2
+0f62:  brsh	.+36
+0f64:  adiw	r24, 4
+0f66:  cpi	r24, 3
+0f68:  cpc	r25, r1
+0f6a:  breq	.+90
+0f6c:  brge	.+30
+0f6e:  cpi	r24, 1
+0f70:  cpc	r25, r1
+0f72:  breq	.+50
+0f74:  sbiw	r24, 2
+0f76:  breq	.+62
+0f78:  lds	r24, 105
+0f7c:  andi	r24, 252
+0f7e:  ori	r24, 1
+0f80:  sts	105, r24
+0f84:  sbi	29, 0
+0f86:  ret
+0f88:  sbiw	r24, 2
+0f8a:  rjmp	.-38
+0f8c:  cpi	r24, 4
+0f8e:  cpc	r25, r1
+0f90:  breq	.+68
+0f92:  sbiw	r24, 5
+0f94:  brne	.-30
+0f96:  lds	r24, 106
+0f9a:  andi	r24, 243
+0f9c:  ori	r24, 4
+0f9e:  sts	106, r24
+0fa2:  sbi	29, 5
+0fa4:  ret
+0fa6:  lds	r24, 105
+0faa:  andi	r24, 243
+0fac:  ori	r24, 4
+0fae:  sts	105, r24
+0fb2:  sbi	29, 1
+0fb4:  ret
+0fb6:  lds	r24, 105
+0fba:  andi	r24, 207
+0fbc:  ori	r24, 16
+0fbe:  sts	105, r24
+0fc2:  sbi	29, 2
+0fc4:  ret
+0fc6:  lds	r24, 105
+0fca:  andi	r24, 63
+0fcc:  ori	r24, 64
+0fce:  sts	105, r24
+0fd2:  sbi	29, 3
+0fd4:  ret
+0fd6:  lds	r24, 106
+0fda:  andi	r24, 252
+0fdc:  ori	r24, 1
+0fde:  sts	106, r24
+0fe2:  sbi	29, 4
+0fe4:  ret
+0fe6:  ldi	r24, 0
+0fe8:  ret
+0fea:  push	r16
+0fec:  push	r17
+0fee:  push	r28
+0ff0:  push	r29
+0ff2:  movw	r28, r24
+0ff4:  mov	r16, r22
+0ff6:  mov	r17, r20
+0ff8:  ldi	r22, 2
+0ffa:  mov	r24, r16
+0ffc:  call	1788
+1000:  ldi	r22, 2
+1002:  mov	r24, r17
+1004:  call	1788
+1008:  mov	r24, r16
+100a:  ldi	r25, 0
+100c:  movw	r30, r24
+100e:  subi	r30, 255
+1010:  sbci	r31, 253
+1012:  lpm	r30, Z
+1014:  ldi	r31, 0
+1016:  lsl	r30
+1018:  rol	r31
+101a:  subi	r30, 77
+101c:  sbci	r31, 254
+101e:  lpm	r26, Z+
+1020:  lpm	r27, Z
+1022:  std	Y+1, r27
+1024:  std	Y+0, r26
+1026:  movw	r30, r24
+1028:  subi	r30, 185
+102a:  sbci	r31, 253
+102c:  lpm	r18, Z
+102e:  std	Y+4, r18
+1030:  mov	r24, r17
+1032:  ldi	r25, 0
+1034:  movw	r30, r24
+1036:  subi	r30, 255
+1038:  sbci	r31, 253
+103a:  lpm	r30, Z
+103c:  ldi	r31, 0
+103e:  lsl	r30
+1040:  rol	r31
+1042:  subi	r30, 77
+1044:  sbci	r31, 254
+1046:  lpm	r20, Z+
+1048:  lpm	r21, Z
+104a:  std	Y+3, r21
+104c:  std	Y+2, r20
+104e:  movw	r30, r24
+1050:  subi	r30, 185
+1052:  sbci	r31, 253
+1054:  lpm	r30, Z
+1056:  std	Y+5, r30
+1058:  std	Y+7, r1
+105a:  std	Y+8, r1
+105c:  std	Y+9, r1
+105e:  std	Y+10, r1
+1060:  ldi	r24, 59
+1062:  ldi	r25, 31
+1064:  sbiw	r24, 1
+1066:  brne	.-4
+1068:  ld	r24, X
+106a:  and	r18, r24
+106c:  ldi	r25, 1
+106e:  brne	.+2
+1070:  ldi	r25, 0
+1072:  movw	r26, r20
+1074:  ld	r24, X
+1076:  and	r30, r24
+1078:  breq	.+2
+107a:  ori	r25, 2
+107c:  std	Y+6, r25
+107e:  movw	r22, r28
+1080:  mov	r24, r16
+1082:  call	4122
+1086:  mov	r16, r24
+1088:  movw	r22, r28
+108a:  mov	r24, r17
+108c:  call	4122
+1090:  add	r24, r16
+1092:  std	Y+11, r24
+1094:  pop	r29
+1096:  pop	r28
+1098:  pop	r17
+109a:  pop	r16
+109c:  ret
+109e:  sts	1194, r1
+10a2:  sts	1193, r1
+10a6:  ldi	r24, 232
+10a8:  ldi	r25, 3
+10aa:  ldi	r26, 0
+10ac:  ldi	r27, 0
+10ae:  sts	1195, r24
+10b2:  sts	1196, r25
+10b6:  sts	1197, r26
+10ba:  sts	1198, r27
+10be:  ldi	r24, 164
+10c0:  ldi	r25, 2
+10c2:  sts	1192, r25
+10c6:  sts	1191, r24
+10ca:  ldi	r24, 197
+10cc:  ldi	r25, 0
+10ce:  sts	1204, r25
+10d2:  sts	1203, r24
+10d6:  ldi	r24, 196
+10d8:  ldi	r25, 0
+10da:  sts	1206, r25
+10de:  sts	1205, r24
+10e2:  ldi	r24, 192
+10e4:  ldi	r25, 0
+10e6:  sts	1208, r25
+10ea:  sts	1207, r24
+10ee:  ldi	r24, 193
+10f0:  ldi	r25, 0
+10f2:  sts	1210, r25
+10f6:  sts	1209, r24
+10fa:  ldi	r24, 194
+10fc:  ldi	r25, 0
+10fe:  sts	1212, r25
+1102:  sts	1211, r24
+1106:  ldi	r24, 198
+1108:  ldi	r25, 0
+110a:  sts	1214, r25
+110e:  sts	1213, r24
+1112:  sts	1216, r1
+1116:  sts	1217, r1
+111a:  sts	1218, r1
+111e:  sts	1219, r1
+1122:  ldi	r26, 68
+1124:  ldi	r27, 5
+1126:  ldi	r25, 0
+1128:  ldi	r24, 0
+112a:  ldi	r18, 33
+112c:  ldi	r30, 1
+112e:  ldi	r31, 0
+1130:  cpi	r24, 6
+1132:  cpc	r25, r1
+1134:  brsh	.+4
+1136:  ldi	r31, 0
+1138:  ldi	r30, 0
+113a:  movw	r20, r24
+113c:  subi	r20, 242
+113e:  sbci	r21, 255
+1140:  add	r30, r20
+1142:  adc	r31, r21
+1144:  sts	87, r18
+1148:  lpm	r30, Z
+114a:  st	X+, r30
+114c:  adiw	r24, 1
+114e:  cpi	r24, 9
+1150:  cpc	r25, r1
+1152:  brne	.-40
+1154:  ldi	r20, 55
+1156:  ldi	r22, 59
+1158:  ldi	r24, 247
+115a:  ldi	r25, 6
+115c:  call	4126
+1160:  ldi	r24, 208
+1162:  ldi	r25, 2
+1164:  sts	1796, r25
+1168:  sts	1795, r24
+116c:  ldi	r24, 220
+116e:  ldi	r25, 2
+1170:  sts	1798, r25
+1174:  sts	1797, r24
+1178:  ldi	r20, 56
+117a:  ldi	r22, 57
+117c:  ldi	r24, 7
+117e:  ldi	r25, 7
+1180:  call	4126
+1184:  ldi	r24, 232
+1186:  ldi	r25, 2
+1188:  sts	1812, r25
+118c:  sts	1811, r24
+1190:  ldi	r24, 245
+1192:  ldi	r25, 2
+1194:  sts	1814, r25
+1198:  sts	1813, r24
+119c:  ldi	r30, 89
+119e:  ldi	r31, 5
+11a0:  ldi	r24, 247
+11a2:  ldi	r25, 6
+11a4:  ldi	r20, 10
+11a6:  ldi	r21, 0
+11a8:  ldi	r18, 182
+11aa:  ldi	r19, 2
+11ac:  std	Z+2, r1
+11ae:  std	Z+3, r1
+11b0:  std	Z+4, r1
+11b2:  std	Z+5, r1
+11b4:  std	Z+7, r21
+11b6:  std	Z+6, r20
+11b8:  std	Z+8, r1
+11ba:  std	Z+1, r19
+11bc:  std	Z+0, r18
+11be:  std	Z+17, r1
+11c0:  adiw	r30, 18
+11c2:  cp	r24, r30
+11c4:  cpc	r25, r31
+11c6:  brne	.-28
+11c8:  sts	1364, r1
+11cc:  sts	1363, r1
+11d0:  sts	1366, r1
+11d4:  sts	1365, r1
+11d8:  sts	1368, r1
+11dc:  sts	1367, r1
+11e0:  ldi	r21, 0
+11e2:  ldi	r20, 0
+11e4:  ldi	r22, 34
+11e6:  ldi	r23, 3
+11e8:  ldi	r24, 83
+11ea:  ldi	r25, 5
+11ec:  call	2990
+11f0:  sts	1358, r1
+11f4:  sts	1357, r1
+11f8:  sts	1360, r1
+11fc:  sts	1359, r1
+1200:  sts	1362, r1
+1204:  sts	1361, r1
+1208:  ldi	r20, 13
+120a:  ldi	r21, 0
+120c:  ldi	r22, 2
+120e:  ldi	r23, 3
+1210:  ldi	r24, 77
+1212:  ldi	r25, 5
+1214:  jmp	2990
+1218:  push	r28
+121a:  push	r29
+121c:  in	r28, 61
+121e:  in	r29, 62
+1220:  sbiw	r28, 15
+1222:  in	r0, 63
+1224:  cli
+1226:  out	62, r29
+1228:  out	63, r0
+122a:  out	61, r28
+122c:  sei
+122e:  in	r24, 36
+1230:  ori	r24, 2
+1232:  out	36, r24
+1234:  in	r24, 36
+1236:  ori	r24, 1
+1238:  out	36, r24
+123a:  in	r24, 37
+123c:  ori	r24, 2
+123e:  out	37, r24
+1240:  in	r24, 37
+1242:  ori	r24, 1
+1244:  out	37, r24
+1246:  lds	r24, 110
+124a:  ori	r24, 1
+124c:  sts	110, r24
+1250:  sts	129, r1
+1254:  lds	r24, 129
+1258:  ori	r24, 2
+125a:  sts	129, r24
+125e:  lds	r24, 129
+1262:  ori	r24, 1
+1264:  sts	129, r24
+1268:  lds	r24, 128
+126c:  ori	r24, 1
+126e:  sts	128, r24
+1272:  lds	r24, 177
+1276:  ori	r24, 4
+1278:  sts	177, r24
+127c:  lds	r24, 176
+1280:  ori	r24, 1
+1282:  sts	176, r24
+1286:  lds	r24, 145
+128a:  ori	r24, 2
+128c:  sts	145, r24
+1290:  lds	r24, 145
+1294:  ori	r24, 1
+1296:  sts	145, r24
+129a:  lds	r24, 144
+129e:  ori	r24, 1
+12a0:  sts	144, r24
+12a4:  lds	r24, 161
+12a8:  ori	r24, 2
+12aa:  sts	161, r24
+12ae:  lds	r24, 161
+12b2:  ori	r24, 1
+12b4:  sts	161, r24
+12b8:  lds	r24, 160
+12bc:  ori	r24, 1
+12be:  sts	160, r24
+12c2:  lds	r24, 289
+12c6:  ori	r24, 2
+12c8:  sts	289, r24
+12cc:  lds	r24, 289
+12d0:  ori	r24, 1
+12d2:  sts	289, r24
+12d6:  lds	r24, 288
+12da:  ori	r24, 1
+12dc:  sts	288, r24
+12e0:  lds	r24, 122
+12e4:  ori	r24, 4
+12e6:  sts	122, r24
+12ea:  lds	r24, 122
+12ee:  ori	r24, 2
+12f0:  sts	122, r24
+12f4:  lds	r24, 122
+12f8:  ori	r24, 1
+12fa:  sts	122, r24
+12fe:  lds	r24, 122
+1302:  ori	r24, 128
+1304:  sts	122, r24
+1308:  sts	193, r1
+130c:  lds	r30, 1207
+1310:  lds	r31, 1208
+1314:  ldi	r24, 2
+1316:  std	Z+0, r24
+1318:  lds	r30, 1203
+131c:  lds	r31, 1204
+1320:  std	Z+0, r1
+1322:  lds	r30, 1205
+1326:  lds	r31, 1206
+132a:  ldi	r24, 16
+132c:  std	Z+0, r24
+132e:  sts	1215, r1
+1332:  lds	r30, 1211
+1336:  lds	r31, 1212
+133a:  ldi	r24, 6
+133c:  std	Z+0, r24
+133e:  lds	r30, 1209
+1342:  lds	r31, 1210
+1346:  ldd	r24, Z+0
+1348:  ori	r24, 16
+134a:  std	Z+0, r24
+134c:  lds	r30, 1209
+1350:  lds	r31, 1210
+1354:  ldd	r24, Z+0
+1356:  ori	r24, 8
+1358:  std	Z+0, r24
+135a:  lds	r30, 1209
+135e:  lds	r31, 1210
+1362:  ldd	r24, Z+0
+1364:  ori	r24, 128
+1366:  std	Z+0, r24
+1368:  lds	r30, 1209
+136c:  lds	r31, 1210
+1370:  ldd	r24, Z+0
+1372:  andi	r24, 223
+1374:  std	Z+0, r24
+1376:  ldi	r24, 50
+1378:  ldi	r25, 0
+137a:  ldi	r26, 0
+137c:  ldi	r27, 0
+137e:  sts	1195, r24
+1382:  sts	1196, r25
+1386:  sts	1197, r26
+138a:  sts	1198, r27
+138e:  ldi	r22, 232
+1390:  ldi	r23, 3
+1392:  ldi	r24, 0
+1394:  ldi	r25, 0
+1396:  call	1982
+139a:  ldi	r27, 69
+139c:  mov	r14, r27
+139e:  ldi	r27, 5
+13a0:  mov	r15, r27
+13a2:  ldi	r17, 77
+13a4:  mov	r12, r17
+13a6:  ldi	r17, 5
+13a8:  mov	r13, r17
+13aa:  movw	r16, r28
+13ac:  subi	r16, 255
+13ae:  sbci	r17, 255
+13b0:  movw	r26, r14
+13b2:  ld	r24, X+
+13b4:  movw	r14, r26
+13b6:  std	Y+11, r1
+13b8:  std	Y+10, r1
+13ba:  std	Y+13, r1
+13bc:  std	Y+12, r1
+13be:  std	Y+15, r1
+13c0:  std	Y+14, r1
+13c2:  ldi	r20, 16
+13c4:  movw	r22, r16
+13c6:  ldi	r25, 0
+13c8:  call	7210
+13cc:  movw	r30, r16
+13ce:  ld	r0, Z+
+13d0:  tst	r0
+13d2:  brne	.-6
+13d4:  sbiw	r30, 1
+13d6:  movw	r20, r30
+13d8:  sub	r20, r16
+13da:  sbc	r21, r17
+13dc:  movw	r22, r16
+13de:  movw	r24, r28
+13e0:  adiw	r24, 10
+13e2:  call	2990
+13e6:  std	Y+2, r1
+13e8:  std	Y+1, r1
+13ea:  std	Y+4, r1
+13ec:  std	Y+3, r1
+13ee:  std	Y+6, r1
+13f0:  std	Y+5, r1
+13f2:  ldi	r22, 83
+13f4:  ldi	r23, 5
+13f6:  movw	r24, r16
+13f8:  call	3056
+13fc:  ldd	r24, Y+14
+13fe:  ldd	r25, Y+15
+1400:  ldd	r8, Y+10
+1402:  ldd	r9, Y+11
+1404:  ldd	r10, Y+5
+1406:  ldd	r11, Y+6
+1408:  add	r10, r24
+140a:  adc	r11, r25
+140c:  cp	r8, r1
+140e:  cpc	r9, r1
+1410:  breq	.+110
+1412:  or	r24, r25
+1414:  breq	.+34
+1416:  movw	r22, r10
+1418:  movw	r24, r16
+141a:  call	2874
+141e:  tst	r24
+1420:  breq	.+94
+1422:  ldd	r18, Y+1
+1424:  ldd	r19, Y+2
+1426:  ldd	r24, Y+5
+1428:  ldd	r25, Y+6
+142a:  movw	r22, r8
+142c:  add	r24, r18
+142e:  adc	r25, r19
+1430:  call	8520
+1434:  std	Y+6, r11
+1436:  std	Y+5, r10
+1438:  movw	r22, r16
+143a:  ldi	r24, 83
+143c:  ldi	r25, 5
+143e:  call	3056
+1442:  movw	r24, r16
+1444:  call	3102
+1448:  movw	r24, r28
+144a:  adiw	r24, 10
+144c:  call	3102
+1450:  cp	r12, r14
+1452:  cpc	r13, r15
+1454:  breq	.+2
+1456:  rjmp	.-168
+1458:  lds	r16, 1363
+145c:  lds	r17, 1364
+1460:  cp	r16, r1
+1462:  cpc	r17, r1
+1464:  breq	.+34
+1466:  movw	r30, r16
+1468:  ldd	r24, Z+0
+146a:  tst	r24
+146c:  breq	.+26
+146e:  mov	r0, r24
+1470:  lsl	r0
+1472:  sbc	r25, r25
+1474:  call	8486
+1478:  movw	r26, r16
+147a:  st	X+, r24
+147c:  movw	r16, r26
+147e:  rjmp	.-26
+1480:  movw	r24, r16
+1482:  call	2954
+1486:  rjmp	.-80
+1488:  ldi	r24, 150
+148a:  ldi	r25, 2
+148c:  call	1372
+1490:  ldi	r24, 186
+1492:  ldi	r25, 2
+1494:  call	2534
+1498:  ldi	r24, 148
+149a:  ldi	r25, 2
+149c:  call	1372
+14a0:  call	2520
+14a4:  ldi	r24, 146
+14a6:  ldi	r25, 2
+14a8:  call	1372
+14ac:  ldi	r24, 10
+14ae:  ldi	r25, 2
+14b0:  call	2534
+14b4:  ldi	r24, 144
+14b6:  ldi	r25, 2
+14b8:  call	1372
+14bc:  call	988
+14c0:  ldi	r24, 141
+14c2:  ldi	r25, 2
+14c4:  call	1372
+14c8:  ldi	r30, 247
+14ca:  mov	r12, r30
+14cc:  ldi	r30, 6
+14ce:  mov	r13, r30
+14d0:  ldi	r16, 89
+14d2:  ldi	r17, 5
+14d4:  ldi	r31, 68
+14d6:  mov	r14, r31
+14d8:  ldi	r31, 2
+14da:  mov	r15, r31
+14dc:  ldi	r26, 10
+14de:  mov	r10, r26
+14e0:  mov	r11, r1
+14e2:  movw	r30, r14
+14e4:  ldd	r9, Z+0
+14e6:  ldd	r23, Z+1
+14e8:  movw	r26, r16
+14ea:  ld	r30, X+
+14ec:  ld	r31, X
+14ee:  ldd	r0, Z+2
+14f0:  ldd	r31, Z+3
+14f2:  mov	r30, r0
+14f4:  ldi	r20, 2
+14f6:  ldi	r21, 0
+14f8:  mov	r22, r9
+14fa:  movw	r24, r16
+14fc:  eicall
+14fe:  movw	r30, r16
+1500:  std	Z+17, r9
+1502:  std	Z+8, r1
+1504:  ld	r0, Z+
+1506:  ldd	r31, Z+0
+1508:  mov	r30, r0
+150a:  ld	r0, Z+
+150c:  ldd	r31, Z+0
+150e:  mov	r30, r0
+1510:  movw	r24, r16
+1512:  eicall
+1514:  tst	r24
+1516:  breq	.+14
+1518:  movw	r26, r16
+151a:  adiw	r26, 8
+151c:  ld	r24, X
+151e:  sbiw	r26, 8
+1520:  ori	r24, 3
+1522:  adiw	r26, 8
+1524:  st	X, r24
+1526:  call	2082
+152a:  movw	r30, r16
+152c:  std	Z+2, r22
+152e:  std	Z+3, r23
+1530:  std	Z+4, r24
+1532:  std	Z+5, r25
+1534:  std	Z+7, r11
+1536:  std	Z+6, r10
+1538:  ldi	r31, 4
+153a:  add	r14, r31
+153c:  adc	r15, r1
+153e:  subi	r16, 238
+1540:  sbci	r17, 255
+1542:  cp	r12, r16
+1544:  cpc	r13, r17
+1546:  brne	.-102
+1548:  ldi	r24, 247
+154a:  ldi	r25, 6
+154c:  call	2324
+1550:  sts	1181, r22
+1554:  sts	1182, r23
+1558:  sts	1183, r24
+155c:  sts	1184, r25
+1560:  ldi	r24, 7
+1562:  ldi	r25, 7
+1564:  call	2324
+1568:  sts	1185, r22
+156c:  sts	1186, r23
+1570:  sts	1187, r24
+1574:  sts	1188, r25
+1578:  ldi	r22, 26
+157a:  mov	r14, r22
+157c:  ldi	r22, 2
+157e:  mov	r15, r22
+1580:  ldi	r23, 68
+1582:  mov	r10, r23
+1584:  ldi	r23, 2
+1586:  mov	r11, r23
+1588:  movw	r16, r14
+158a:  movw	r26, r16
+158c:  ld	r12, X+
+158e:  ld	r13, X+
+1590:  movw	r16, r26
+1592:  cp	r12, r1
+1594:  cpc	r13, r1
+1596:  breq	.+16
+1598:  ldi	r22, 1
+159a:  mov	r24, r12
+159c:  call	1788
+15a0:  ldi	r22, 1
+15a2:  mov	r24, r12
+15a4:  call	1696
+15a8:  cp	r10, r16
+15aa:  cpc	r11, r17
+15ac:  brne	.-36
+15ae:  ldi	r22, 184
+15b0:  ldi	r23, 11
+15b2:  ldi	r24, 0
+15b4:  ldi	r25, 0
+15b6:  call	1982
+15ba:  movw	r30, r14
+15bc:  ld	r24, Z+
+15be:  ld	r25, Z+
+15c0:  movw	r14, r30
+15c2:  sbiw	r24, 0
+15c4:  breq	.+6
+15c6:  ldi	r22, 0
+15c8:  call	1696
+15cc:  cp	r16, r14
+15ce:  cpc	r17, r15
+15d0:  brne	.-24
+15d2:  ldi	r22, 1
+15d4:  ldi	r24, 8
+15d6:  call	1788
+15da:  ldi	r22, 1
+15dc:  ldi	r24, 8
+15de:  call	1696
+15e2:  call	2082
+15e6:  movw	r8, r22
+15e8:  movw	r10, r24
+15ea:  lds	r24, 528
+15ee:  lds	r25, 529
+15f2:  lds	r26, 530
+15f6:  lds	r27, 531
+15fa:  movw	r20, r24
+15fc:  movw	r22, r26
+15fe:  subi	r20, 72
+1600:  sbci	r21, 244
+1602:  sbci	r22, 255
+1604:  sbci	r23, 255
+1606:  cp	r8, r20
+1608:  cpc	r9, r21
+160a:  cpc	r10, r22
+160c:  cpc	r11, r23
+160e:  brsh	.+10
+1610:  cp	r8, r24
+1612:  cpc	r9, r25
+1614:  cpc	r10, r26
+1616:  cpc	r11, r27
+1618:  brsh	.+96
+161a:  ldi	r24, 5
+161c:  ldi	r25, 3
+161e:  call	1372
+1622:  ldi	r24, 186
+1624:  ldi	r25, 2
+1626:  call	2534
+162a:  ldi	r24, 3
+162c:  ldi	r25, 3
+162e:  call	1372
+1632:  call	2520
+1636:  ldi	r24, 1
+1638:  ldi	r25, 3
+163a:  call	1372
+163e:  ldi	r24, 10
+1640:  ldi	r25, 2
+1642:  call	2534
+1646:  ldi	r24, 255
+1648:  ldi	r25, 2
+164a:  call	1372
+164e:  call	988
+1652:  ldi	r24, 252
+1654:  ldi	r25, 2
+1656:  call	1372
+165a:  sts	528, r8
+165e:  sts	529, r9
+1662:  sts	530, r10
+1666:  sts	531, r11
+166a:  sts	518, r8
+166e:  sts	519, r9
+1672:  sts	520, r10
+1676:  sts	521, r11
+167a:  ldi	r20, 247
+167c:  mov	r14, r20
+167e:  ldi	r20, 6
+1680:  mov	r15, r20
+1682:  ldi	r21, 157
+1684:  mov	r2, r21
+1686:  ldi	r21, 4
+1688:  mov	r3, r21
+168a:  mov	r13, r1
+168c:  ldi	r25, 1
+168e:  ldi	r18, 186
+1690:  ldi	r19, 2
+1692:  subi	r18, 16
+1694:  sbci	r19, 3
+1696:  breq	.+2
+1698:  ldi	r25, 0
+169a:  movw	r26, r14
+169c:  adiw	r26, 12
+169e:  ld	r18, X+
+16a0:  ld	r19, X
+16a2:  ldi	r27, 3
+16a4:  cpi	r18, 35
+16a6:  cpc	r19, r27
+16a8:  brne	.+2
+16aa:  rjmp	.+144
+16ac:  subi	r18, 46
+16ae:  sbci	r19, 3
+16b0:  brne	.+2
+16b2:  rjmp	.+136
+16b4:  movw	r26, r14
+16b6:  adiw	r26, 14
+16b8:  ld	r18, X+
+16ba:  ld	r19, X
+16bc:  ldi	r24, 1
+16be:  ldi	r27, 3
+16c0:  cpi	r18, 57
+16c2:  cpc	r19, r27
+16c4:  breq	.+8
+16c6:  subi	r18, 68
+16c8:  sbci	r19, 3
+16ca:  breq	.+2
+16cc:  ldi	r24, 0
+16ce:  tst	r25
+16d0:  breq	.+110
+16d2:  tst	r24
+16d4:  breq	.+106
+16d6:  movw	r24, r14
+16d8:  call	2324
+16dc:  ldi	r18, 4
+16de:  ldi	r19, 0
+16e0:  ldi	r20, 0
+16e2:  ldi	r21, 0
+16e4:  call	7362
+16e8:  movw	r4, r18
+16ea:  movw	r6, r20
+16ec:  lds	r24, 1189
+16f0:  lds	r25, 1190
+16f4:  sbiw	r24, 1
+16f6:  breq	.+2
+16f8:  rjmp	.+990
+16fa:  sbrs	r13, 0
+16fc:  rjmp	.+986
+16fe:  lds	r20, 1185
+1702:  lds	r21, 1186
+1706:  lds	r22, 1187
+170a:  lds	r23, 1188
+170e:  lds	r24, 516
+1712:  lds	r25, 517
+1716:  cp	r20, r4
+1718:  cpc	r21, r5
+171a:  cpc	r22, r6
+171c:  cpc	r23, r7
+171e:  brlt	.+2
+1720:  rjmp	.+538
+1722:  cpi	r24, 15
+1724:  cpc	r25, r1
+1726:  brge	.+2
+1728:  rjmp	.+530
+172a:  sbiw	r24, 15
+172c:  cpi	r24, 15
+172e:  cpc	r25, r1
+1730:  brlt	.+30
+1732:  sts	517, r25
+1736:  sts	516, r24
+173a:  rjmp	.+28
+173c:  ldi	r24, 1
+173e:  rjmp	.-114
+1740:  movw	r24, r14
+1742:  call	2324
+1746:  ldi	r18, 2
+1748:  ldi	r19, 0
+174a:  ldi	r20, 0
+174c:  ldi	r21, 0
+174e:  rjmp	.-108
+1750:  sts	517, r1
+1754:  sts	516, r1
+1758:  lds	r16, 516
+175c:  lds	r17, 517
+1760:  ldi	r22, 1
+1762:  ldi	r24, 8
+1764:  call	1788
+1768:  cp	r16, r1
+176a:  cpc	r17, r1
+176c:  breq	.+2
+176e:  rjmp	.+484
+1770:  ldi	r22, 0
+1772:  ldi	r24, 8
+1774:  call	1696
+1778:  movw	r26, r2
+177a:  st	X+, r4
+177c:  st	X+, r5
+177e:  st	X+, r6
+1780:  st	X+, r7
+1782:  movw	r2, r26
+1784:  ldi	r27, 16
+1786:  add	r14, r27
+1788:  adc	r15, r1
+178a:  inc	r13
+178c:  mov	r30, r13
+178e:  andi	r30, 1
+1790:  mov	r13, r30
+1792:  ldi	r19, 23
+1794:  mov	r4, r19
+1796:  ldi	r19, 7
+1798:  mov	r5, r19
+179a:  cp	r4, r14
+179c:  cpc	r5, r15
+179e:  breq	.+2
+17a0:  rjmp	.-278
+17a2:  ldi	r25, 68
+17a4:  mov	r12, r25
+17a6:  ldi	r25, 2
+17a8:  mov	r13, r25
+17aa:  ldi	r16, 89
+17ac:  ldi	r17, 5
+17ae:  mov	r15, r1
+17b0:  mov	r14, r1
+17b2:  ldi	r18, 2
+17b4:  mov	r6, r18
+17b6:  movw	r26, r16
+17b8:  adiw	r26, 8
+17ba:  ld	r24, X
+17bc:  sbiw	r26, 8
+17be:  andi	r24, 251
+17c0:  adiw	r26, 8
+17c2:  st	X, r24
+17c4:  sbiw	r26, 8
+17c6:  ld	r30, X+
+17c8:  ld	r31, X
+17ca:  ld	r0, Z+
+17cc:  ldd	r31, Z+0
+17ce:  mov	r30, r0
+17d0:  movw	r24, r16
+17d2:  eicall
+17d4:  mov	r7, r24
+17d6:  movw	r30, r16
+17d8:  ldd	r24, Z+8
+17da:  lsr	r24
+17dc:  andi	r24, 1
+17de:  cp	r7, r24
+17e0:  brne	.+2
+17e2:  rjmp	.+842
+17e4:  call	2082
+17e8:  movw	r26, r16
+17ea:  adiw	r26, 2
+17ec:  st	X+, r22
+17ee:  st	X+, r23
+17f0:  st	X+, r24
+17f2:  st	X, r25
+17f4:  sbiw	r26, 5
+17f6:  adiw	r26, 8
+17f8:  ld	r24, X
+17fa:  sbiw	r26, 8
+17fc:  eor	r24, r6
+17fe:  adiw	r26, 8
+1800:  st	X, r24
+1802:  movw	r30, r16
+1804:  ldd	r24, Z+8
+1806:  sbrs	r24, 2
+1808:  rjmp	.+132
+180a:  movw	r26, r12
+180c:  adiw	r26, 2
+180e:  ld	r24, X+
+1810:  ld	r25, X
+1812:  call	2534
+1816:  movw	r30, r16
+1818:  ldd	r25, Z+8
+181a:  mov	r24, r25
+181c:  andi	r24, 4
+181e:  sbrc	r25, 0
+1820:  rjmp	.+948
+1822:  tst	r24
+1824:  breq	.+76
+1826:  ldi	r24, 244
+1828:  ldi	r25, 2
+182a:  call	1372
+182e:  ldi	r31, 21
+1830:  cp	r14, r31
+1832:  cpc	r15, r1
+1834:  brne	.+60
+1836:  lds	r24, 1189
+183a:  lds	r25, 1190
+183e:  or	r24, r25
+1840:  breq	.+2
+1842:  rjmp	.+894
+1844:  clr	r2
+1846:  inc	r2
+1848:  mov	r3, r1
+184a:  sts	1190, r3
+184e:  sts	1189, r2
+1852:  sts	512, r8
+1856:  sts	513, r9
+185a:  sts	514, r10
+185e:  sts	515, r11
+1862:  ldi	r22, 1
+1864:  ldi	r24, 60
+1866:  call	1696
+186a:  ldi	r22, 1
+186c:  ldi	r24, 68
+186e:  call	1696
+1872:  ldi	r22, 100
+1874:  ldi	r23, 0
+1876:  ldi	r24, 0
+1878:  ldi	r25, 0
+187a:  call	1982
+187e:  sts	518, r8
+1882:  sts	519, r9
+1886:  sts	520, r10
+188a:  sts	521, r11
+188e:  ldi	r18, 255
+1890:  sub	r14, r18
+1892:  sbc	r15, r18
+1894:  subi	r16, 238
+1896:  sbci	r17, 255
+1898:  ldi	r19, 4
+189a:  add	r12, r19
+189c:  adc	r13, r1
+189e:  ldi	r20, 23
+18a0:  cp	r14, r20
+18a2:  cpc	r15, r1
+18a4:  breq	.+2
+18a6:  rjmp	.-242
+18a8:  ldi	r22, 1
+18aa:  ldi	r23, 0
+18ac:  ldi	r24, 0
+18ae:  ldi	r25, 0
+18b0:  call	1982
+18b4:  lds	r24, 518
+18b8:  lds	r25, 519
+18bc:  lds	r26, 520
+18c0:  lds	r27, 521
+18c4:  movw	r20, r24
+18c6:  movw	r22, r26
+18c8:  subi	r20, 156
+18ca:  sbci	r21, 255
+18cc:  sbci	r22, 255
+18ce:  sbci	r23, 255
+18d0:  cp	r8, r20
+18d2:  cpc	r9, r21
+18d4:  cpc	r10, r22
+18d6:  cpc	r11, r23
+18d8:  brsh	.+10
+18da:  cp	r8, r24
+18dc:  cpc	r9, r25
+18de:  cpc	r10, r26
+18e0:  cpc	r11, r27
+18e2:  brsh	.+24
+18e4:  ldi	r24, 238
+18e6:  ldi	r25, 2
+18e8:  call	1372
+18ec:  sts	518, r8
+18f0:  sts	519, r9
+18f4:  sts	520, r10
+18f8:  sts	521, r11
+18fc:  lds	r24, 512
+1900:  lds	r25, 513
+1904:  lds	r26, 514
+1908:  lds	r27, 515
+190c:  subi	r24, 208
+190e:  sbci	r25, 138
+1910:  sbci	r26, 255
+1912:  sbci	r27, 255
+1914:  cp	r24, r8
+1916:  cpc	r25, r9
+1918:  cpc	r26, r10
+191a:  cpc	r27, r11
+191c:  brsh	.+24
+191e:  sts	1190, r1
+1922:  sts	1189, r1
+1926:  ldi	r22, 0
+1928:  ldi	r24, 60
+192a:  call	1696
+192e:  ldi	r22, 0
+1930:  ldi	r24, 68
+1932:  call	1696
+1936:  call	2780
+193a:  rjmp	.-858
+193c:  cp	r4, r20
+193e:  cpc	r5, r21
+1940:  cpc	r6, r22
+1942:  cpc	r7, r23
+1944:  brlt	.+2
+1946:  rjmp	.-496
+1948:  cpi	r24, 241
+194a:  cpc	r25, r1
+194c:  brlt	.+2
+194e:  rjmp	.-504
+1950:  adiw	r24, 15
+1952:  rjmp	.-546
+1954:  cpi	r16, 255
+1956:  cpc	r17, r1
+1958:  brne	.+4
+195a:  ldi	r22, 1
+195c:  rjmp	.-492
+195e:  ldi	r30, 176
+1960:  ldi	r31, 2
+1962:  lpm	r24, Z
+1964:  ldi	r30, 255
+1966:  add	r30, r24
+1968:  cpi	r30, 18
+196a:  brlo	.+2
+196c:  rjmp	.+352
+196e:  ldi	r31, 0
+1970:  clr	r24
+1972:  subi	r30, 40
+1974:  sbci	r31, 243
+1976:  sbci	r24, 255
+1978:  jmp	7424
+197c:  add	r14, r10
+197e:  add	r14, r15
+1980:  add	r15, r4
+1982:  add	r15, r14
+1984:  add	r16, r8
+1986:  add	r24, r1
+1988:  add	r17, r2
+198a:  add	r17, r10
+198c:  add	r18, r2
+198e:  add	r18, r12
+1990:  add	r19, r6
+1992:  add	r20, r0
+1994:  add	r20, r15
+1996:  add	r21, r9
+1998:  add	r24, r1
+199a:  add	r22, r3
+199c:  add	r22, r13
+199e:  add	r23, r7
+19a0:  in	r24, 36
+19a2:  ori	r24, 128
+19a4:  out	36, r24
+19a6:  out	39, r16
+19a8:  rjmp	.-562
+19aa:  in	r24, 36
+19ac:  ori	r24, 32
+19ae:  out	36, r24
+19b0:  out	40, r16
+19b2:  rjmp	.-572
+19b4:  lds	r24, 128
+19b8:  ori	r24, 128
+19ba:  sts	128, r24
+19be:  sts	137, r17
+19c2:  sts	136, r16
+19c6:  rjmp	.-592
+19c8:  lds	r24, 128
+19cc:  ori	r24, 32
+19ce:  sts	128, r24
+19d2:  sts	139, r17
+19d6:  sts	138, r16
+19da:  rjmp	.-612
+19dc:  lds	r24, 128
+19e0:  ori	r24, 8
+19e2:  sts	128, r24
+19e6:  sts	141, r17
+19ea:  sts	140, r16
+19ee:  rjmp	.-632
+19f0:  lds	r24, 176
+19f4:  ori	r24, 128
+19f6:  sts	176, r24
+19fa:  sts	179, r16
+19fe:  rjmp	.-648
+1a00:  lds	r24, 176
+1a04:  ori	r24, 32
+1a06:  sts	176, r24
+1a0a:  sts	180, r16
+1a0e:  rjmp	.-664
+1a10:  lds	r24, 144
+1a14:  ori	r24, 128
+1a16:  sts	144, r24
+1a1a:  sts	153, r17
+1a1e:  sts	152, r16
+1a22:  rjmp	.-684
+1a24:  lds	r24, 144
+1a28:  ori	r24, 32
+1a2a:  sts	144, r24
+1a2e:  sts	155, r17
+1a32:  sts	154, r16
+1a36:  rjmp	.-704
+1a38:  lds	r24, 144
+1a3c:  ori	r24, 8
+1a3e:  sts	144, r24
+1a42:  sts	157, r17
+1a46:  sts	156, r16
+1a4a:  rjmp	.-724
+1a4c:  lds	r24, 160
+1a50:  ori	r24, 128
+1a52:  sts	160, r24
+1a56:  lds	r24, 160
+1a5a:  andi	r24, 191
+1a5c:  sts	160, r24
+1a60:  sts	169, r17
+1a64:  sts	168, r16
+1a68:  rjmp	.-754
+1a6a:  lds	r24, 160
+1a6e:  ori	r24, 32
+1a70:  sts	160, r24
+1a74:  sts	171, r17
+1a78:  sts	170, r16
+1a7c:  rjmp	.-774
+1a7e:  lds	r24, 160
+1a82:  ori	r24, 8
+1a84:  sts	160, r24
+1a88:  sts	173, r17
+1a8c:  sts	172, r16
+1a90:  rjmp	.-794
+1a92:  lds	r24, 288
+1a96:  ori	r24, 128
+1a98:  sts	288, r24
+1a9c:  sts	297, r17
+1aa0:  sts	296, r16
+1aa4:  rjmp	.-814
+1aa6:  lds	r24, 288
+1aaa:  ori	r24, 32
+1aac:  sts	288, r24
+1ab0:  sts	299, r17
+1ab4:  sts	298, r16
+1ab8:  rjmp	.-834
+1aba:  lds	r24, 288
+1abe:  ori	r24, 8
+1ac0:  sts	288, r24
+1ac4:  sts	301, r17
+1ac8:  sts	300, r16
+1acc:  rjmp	.-854
+1ace:  cpi	r16, 128
+1ad0:  cpc	r17, r1
+1ad2:  brlt	.+2
+1ad4:  rjmp	.-380
+1ad6:  rjmp	.-872
+1ad8:  movw	r30, r2
+1ada:  ldd	r24, Z+0
+1adc:  ldd	r25, Z+1
+1ade:  ldd	r26, Z+2
+1ae0:  ldd	r27, Z+3
+1ae2:  cp	r24, r4
+1ae4:  cpc	r25, r5
+1ae6:  cpc	r26, r6
+1ae8:  cpc	r27, r7
+1aea:  brge	.+38
+1aec:  movw	r26, r14
+1aee:  adiw	r26, 14
+1af0:  ld	r24, X+
+1af2:  ld	r25, X
+1af4:  call	2534
+1af8:  ldi	r24, 250
+1afa:  ldi	r25, 2
+1afc:  call	1372
+1b00:  sts	518, r8
+1b04:  sts	519, r9
+1b08:  sts	520, r10
+1b0c:  sts	521, r11
+1b10:  rjmp	.-922
+1b12:  cp	r4, r24
+1b14:  cpc	r5, r25
+1b16:  cpc	r6, r26
+1b18:  cpc	r7, r27
+1b1a:  brlt	.+2
+1b1c:  rjmp	.-934
+1b1e:  movw	r30, r14
+1b20:  ldd	r24, Z+12
+1b22:  ldd	r25, Z+13
+1b24:  call	2534
+1b28:  ldi	r24, 248
+1b2a:  ldi	r25, 2
+1b2c:  rjmp	.-50
+1b2e:  call	2082
+1b32:  movw	r30, r16
+1b34:  ldd	r18, Z+2
+1b36:  ldd	r19, Z+3
+1b38:  ldd	r20, Z+4
+1b3a:  ldd	r21, Z+5
+1b3c:  movw	r2, r22
+1b3e:  movw	r4, r24
+1b40:  sub	r2, r18
+1b42:  sbc	r3, r19
+1b44:  sbc	r4, r20
+1b46:  sbc	r5, r21
+1b48:  movw	r22, r4
+1b4a:  movw	r20, r2
+1b4c:  ldd	r24, Z+6
+1b4e:  ldd	r25, Z+7
+1b50:  ldi	r27, 0
+1b52:  ldi	r26, 0
+1b54:  cp	r20, r24
+1b56:  cpc	r21, r25
+1b58:  cpc	r22, r26
+1b5a:  cpc	r23, r27
+1b5c:  brsh	.+2
+1b5e:  rjmp	.-862
+1b60:  ldd	r24, Z+8
+1b62:  andi	r24, 1
+1b64:  cp	r7, r24
+1b66:  brne	.+2
+1b68:  rjmp	.-872
+1b6a:  call	2082
+1b6e:  movw	r26, r16
+1b70:  adiw	r26, 2
+1b72:  st	X+, r22
+1b74:  st	X+, r23
+1b76:  st	X+, r24
+1b78:  st	X, r25
+1b7a:  sbiw	r26, 5
+1b7c:  adiw	r26, 8
+1b7e:  ld	r24, X
+1b80:  ldi	r27, 1
+1b82:  eor	r24, r27
+1b84:  ori	r24, 4
+1b86:  movw	r30, r16
+1b88:  std	Z+8, r24
+1b8a:  call	2082
+1b8e:  movw	r26, r16
+1b90:  adiw	r26, 9
+1b92:  ld	r18, X+
+1b94:  ld	r19, X+
+1b96:  ld	r20, X+
+1b98:  ld	r21, X
+1b9a:  sbiw	r26, 12
+1b9c:  sub	r22, r18
+1b9e:  sbc	r23, r19
+1ba0:  sbc	r24, r20
+1ba2:  sbc	r25, r21
+1ba4:  movw	r30, r16
+1ba6:  std	Z+13, r22
+1ba8:  std	Z+14, r23
+1baa:  std	Z+15, r24
+1bac:  std	Z+16, r25
+1bae:  call	2082
+1bb2:  movw	r26, r16
+1bb4:  adiw	r26, 9
+1bb6:  st	X+, r22
+1bb8:  st	X+, r23
+1bba:  st	X+, r24
+1bbc:  st	X, r25
+1bbe:  sbiw	r26, 12
+1bc0:  rjmp	.-960
+1bc2:  sts	1190, r1
+1bc6:  sts	1189, r1
+1bca:  ldi	r22, 0
+1bcc:  ldi	r24, 60
+1bce:  call	1696
+1bd2:  ldi	r22, 0
+1bd4:  rjmp	.-874
+1bd6:  tst	r24
+1bd8:  brne	.+2
+1bda:  rjmp	.-874
+1bdc:  ldi	r24, 240
+1bde:  ldi	r25, 2
+1be0:  call	1372
+1be4:  rjmp	.-884
+1be6:  ldi	r24, 77
+1be8:  ldi	r25, 5
+1bea:  call	3102
+1bee:  ldi	r24, 83
+1bf0:  ldi	r25, 5
+1bf2:  jmp	3102
+1bf6:  clr	r27
+1bf8:  movw	r30, r22
+1bfa:  clr	r21
+1bfc:  clr	r26
+1bfe:  lsl	r24
+1c00:  rol	r25
+1c02:  rol	r26
+1c04:  cp	r26, r20
+1c06:  brlo	.+4
+1c08:  sub	r26, r20
+1c0a:  inc	r24
+1c0c:  subi	r21, 16
+1c0e:  brne	.-18
+1c10:  subi	r26, 208
+1c12:  cpi	r26, 58
+1c14:  brlo	.+2
+1c16:  subi	r26, 217
+1c18:  st	Z+, r26
+1c1a:  sbiw	r24, 0
+1c1c:  brne	.-34
+1c1e:  cpse	r27, r1
+1c20:  st	Z+, r27
+1c22:  st	Z+, r1
+1c24:  movw	r24, r22
+1c26:  jmp	7262
+1c2a:  movw	r26, r24
+1c2c:  movw	r30, r24
+1c2e:  mov	r22, r23
+1c30:  ld	r23, Z+
+1c32:  tst	r23
+1c34:  brne	.-8
+1c36:  sbiw	r30, 2
+1c38:  rjmp	.+8
+1c3a:  ld	r23, X
+1c3c:  st	X+, r22
+1c3e:  std	Z+0, r23
+1c40:  ld	r22, -Z
+1c42:  cp	r26, r30
+1c44:  cpc	r27, r31
+1c46:  brlo	.-14
+1c48:  ret
+1c4a:  ldi	r26, 33
+1c4c:  mov	r1, r26
+1c4e:  sub	r26, r26
+1c50:  sub	r27, r27
+1c52:  movw	r30, r26
+1c54:  rjmp	.+26
+1c56:  rol	r26
+1c58:  rol	r27
+1c5a:  rol	r30
+1c5c:  rol	r31
+1c5e:  cp	r26, r18
+1c60:  cpc	r27, r19
+1c62:  cpc	r30, r20
+1c64:  cpc	r31, r21
+1c66:  brlo	.+8
+1c68:  sub	r26, r18
+1c6a:  sbc	r27, r19
+1c6c:  sbc	r30, r20
+1c6e:  sbc	r31, r21
+1c70:  rol	r22
+1c72:  rol	r23
+1c74:  rol	r24
+1c76:  rol	r25
+1c78:  dec	r1
+1c7a:  brne	.-38
+1c7c:  com	r22
+1c7e:  com	r23
+1c80:  com	r24
+1c82:  com	r25
+1c84:  movw	r18, r22
+1c86:  movw	r20, r24
+1c88:  movw	r22, r26
+1c8a:  movw	r24, r30
+1c8c:  ret
+1c8e:  mov	r0, r21
+1c90:  bst	r25, 7
+1c92:  brtc	.+6
+1c94:  com	r0
+1c96:  call	7408
+1c9a:  sbrc	r21, 7
+1c9c:  rcall	.+14
+1c9e:  call	7294
+1ca2:  sbrc	r0, 7
+1ca4:  rcall	.+6
+1ca6:  brtc	.+18
+1ca8:  jmp	7408
+1cac:  com	r21
+1cae:  com	r20
+1cb0:  com	r19
+1cb2:  neg	r18
+1cb4:  sbci	r19, 255
+1cb6:  sbci	r20, 255
+1cb8:  sbci	r21, 255
+1cba:  ret
+1cbc:  com	r25
+1cbe:  com	r24
+1cc0:  com	r23
+1cc2:  neg	r22
+1cc4:  sbci	r23, 255
+1cc6:  sbci	r24, 255
+1cc8:  sbci	r25, 255
+1cca:  ret
+1ccc:  lsl	r30
+1cce:  rol	r31
+1cd0:  rol	r24
+1cd2:  out	59, r24
+1cd4:  elpm	r0, Z+
+1cd6:  elpm	r31, Z
+1cd8:  mov	r30, r0
+1cda:  eijmp
+1cdc:  push	r16
+1cde:  push	r17
+1ce0:  push	r28
+1ce2:  push	r29
+1ce4:  cpi	r24, 2
+1ce6:  cpc	r25, r1
+1ce8:  brsh	.+4
+1cea:  ldi	r24, 2
+1cec:  ldi	r25, 0
+1cee:  lds	r30, 1817
+1cf2:  lds	r31, 1818
+1cf6:  ldi	r19, 0
+1cf8:  ldi	r18, 0
+1cfa:  ldi	r27, 0
+1cfc:  ldi	r26, 0
+1cfe:  sbiw	r30, 0
+1d00:  brne	.+38
+1d02:  cp	r18, r1
+1d04:  cpc	r19, r1
+1d06:  brne	.+2
+1d08:  rjmp	.+148
+1d0a:  sub	r18, r24
+1d0c:  sbc	r19, r25
+1d0e:  cpi	r18, 4
+1d10:  cpc	r19, r1
+1d12:  brsh	.+118
+1d14:  ldd	r24, Y+2
+1d16:  ldd	r25, Y+3
+1d18:  cp	r22, r1
+1d1a:  cpc	r23, r1
+1d1c:  breq	.+98
+1d1e:  movw	r30, r22
+1d20:  std	Z+3, r25
+1d22:  std	Z+2, r24
+1d24:  movw	r30, r28
+1d26:  rjmp	.+34
+1d28:  ldd	r20, Z+0
+1d2a:  ldd	r21, Z+1
+1d2c:  ldd	r16, Z+2
+1d2e:  ldd	r17, Z+3
+1d30:  cp	r20, r24
+1d32:  cpc	r21, r25
+1d34:  brlo	.+56
+1d36:  cp	r20, r24
+1d38:  cpc	r21, r25
+1d3a:  brne	.+38
+1d3c:  sbiw	r26, 0
+1d3e:  breq	.+24
+1d40:  adiw	r26, 2
+1d42:  st	X, r16
+1d44:  sbiw	r26, 2
+1d46:  adiw	r26, 3
+1d48:  st	X, r17
+1d4a:  adiw	r30, 2
+1d4c:  movw	r24, r30
+1d4e:  pop	r29
+1d50:  pop	r28
+1d52:  pop	r17
+1d54:  pop	r16
+1d56:  ret
+1d58:  sts	1817, r16
+1d5c:  sts	1818, r17
+1d60:  rjmp	.-24
+1d62:  cp	r18, r1
+1d64:  cpc	r19, r1
+1d66:  breq	.+20
+1d68:  cp	r20, r18
+1d6a:  cpc	r21, r19
+1d6c:  brlo	.+14
+1d6e:  movw	r20, r18
+1d70:  movw	r26, r22
+1d72:  movw	r18, r20
+1d74:  movw	r22, r26
+1d76:  movw	r26, r30
+1d78:  movw	r30, r16
+1d7a:  rjmp	.-126
+1d7c:  movw	r28, r30
+1d7e:  rjmp	.-14
+1d80:  sts	1818, r25
+1d84:  sts	1817, r24
+1d88:  rjmp	.-102
+1d8a:  movw	r30, r28
+1d8c:  add	r30, r18
+1d8e:  adc	r31, r19
+1d90:  st	Z+, r24
+1d92:  st	Z+, r25
+1d94:  subi	r18, 2
+1d96:  sbc	r19, r1
+1d98:  std	Y+1, r19
+1d9a:  std	Y+0, r18
+1d9c:  rjmp	.-82
+1d9e:  lds	r18, 1815
+1da2:  lds	r19, 1816
+1da6:  or	r18, r19
+1da8:  brne	.+16
+1daa:  lds	r18, 534
+1dae:  lds	r19, 535
+1db2:  sts	1816, r19
+1db6:  sts	1815, r18
+1dba:  lds	r18, 532
+1dbe:  lds	r19, 533
+1dc2:  cp	r18, r1
+1dc4:  cpc	r19, r1
+1dc6:  brne	.+16
+1dc8:  in	r18, 61
+1dca:  in	r19, 62
+1dcc:  lds	r20, 536
+1dd0:  lds	r21, 537
+1dd4:  sub	r18, r20
+1dd6:  sbc	r19, r21
+1dd8:  lds	r30, 1815
+1ddc:  lds	r31, 1816
+1de0:  cp	r30, r18
+1de2:  cpc	r31, r19
+1de4:  brsh	.+40
+1de6:  sub	r18, r30
+1de8:  sbc	r19, r31
+1dea:  cp	r18, r24
+1dec:  cpc	r19, r25
+1dee:  brlo	.+30
+1df0:  movw	r20, r24
+1df2:  subi	r20, 254
+1df4:  sbci	r21, 255
+1df6:  cp	r18, r20
+1df8:  cpc	r19, r21
+1dfa:  brlo	.+18
+1dfc:  add	r20, r30
+1dfe:  adc	r21, r31
+1e00:  sts	1816, r21
+1e04:  sts	1815, r20
+1e08:  st	Z+, r24
+1e0a:  st	Z+, r25
+1e0c:  rjmp	.-194
+1e0e:  ldi	r31, 0
+1e10:  ldi	r30, 0
+1e12:  rjmp	.-200
+1e14:  push	r28
+1e16:  push	r29
+1e18:  sbiw	r24, 0
+1e1a:  breq	.+58
+1e1c:  movw	r30, r24
+1e1e:  sbiw	r30, 2
+1e20:  std	Z+3, r1
+1e22:  std	Z+2, r1
+1e24:  lds	r26, 1817
+1e28:  lds	r27, 1818
+1e2c:  movw	r28, r26
+1e2e:  ldi	r19, 0
+1e30:  ldi	r18, 0
+1e32:  sbiw	r26, 0
+1e34:  brne	.+40
+1e36:  ldd	r18, Z+0
+1e38:  ldd	r19, Z+1
+1e3a:  add	r24, r18
+1e3c:  adc	r25, r19
+1e3e:  lds	r18, 1815
+1e42:  lds	r19, 1816
+1e46:  cp	r18, r24
+1e48:  cpc	r19, r25
+1e4a:  breq	.+2
+1e4c:  rjmp	.+194
+1e4e:  sts	1816, r31
+1e52:  sts	1815, r30
+1e56:  pop	r29
+1e58:  pop	r28
+1e5a:  ret
+1e5c:  movw	r28, r20
+1e5e:  cp	r28, r30
+1e60:  cpc	r29, r31
+1e62:  brsh	.+122
+1e64:  ldd	r20, Y+2
+1e66:  ldd	r21, Y+3
+1e68:  movw	r18, r28
+1e6a:  cp	r20, r1
+1e6c:  cpc	r21, r1
+1e6e:  brne	.-20
+1e70:  movw	r28, r18
+1e72:  std	Y+3, r31
+1e74:  std	Y+2, r30
+1e76:  ld	r20, Y+
+1e78:  ld	r21, Y+
+1e7a:  add	r28, r20
+1e7c:  adc	r29, r21
+1e7e:  cp	r30, r28
+1e80:  cpc	r31, r29
+1e82:  brne	.+24
+1e84:  ldd	r24, Z+0
+1e86:  ldd	r25, Z+1
+1e88:  adiw	r24, 2
+1e8a:  add	r24, r20
+1e8c:  adc	r25, r21
+1e8e:  movw	r28, r18
+1e90:  std	Y+1, r25
+1e92:  std	Y+0, r24
+1e94:  ldd	r24, Z+2
+1e96:  ldd	r25, Z+3
+1e98:  std	Y+3, r25
+1e9a:  std	Y+2, r24
+1e9c:  ldi	r31, 0
+1e9e:  ldi	r30, 0
+1ea0:  adiw	r26, 2
+1ea2:  ld	r24, X+
+1ea4:  ld	r25, X
+1ea6:  sbiw	r26, 3
+1ea8:  sbiw	r24, 0
+1eaa:  brne	.+110
+1eac:  ld	r18, X+
+1eae:  ld	r19, X
+1eb0:  sbiw	r26, 1
+1eb2:  movw	r24, r26
+1eb4:  adiw	r24, 2
+1eb6:  add	r24, r18
+1eb8:  adc	r25, r19
+1eba:  lds	r18, 1815
+1ebe:  lds	r19, 1816
+1ec2:  cp	r18, r24
+1ec4:  cpc	r19, r25
+1ec6:  brne	.-114
+1ec8:  sbiw	r30, 0
+1eca:  brne	.+84
+1ecc:  sts	1818, r1
+1ed0:  sts	1817, r1
+1ed4:  sts	1816, r27
+1ed8:  sts	1815, r26
+1edc:  rjmp	.-136
+1ede:  std	Z+3, r29
+1ee0:  std	Z+2, r28
+1ee2:  ldd	r20, Z+0
+1ee4:  ldd	r21, Z+1
+1ee6:  add	r24, r20
+1ee8:  adc	r25, r21
+1eea:  cp	r28, r24
+1eec:  cpc	r29, r25
+1eee:  brne	.+24
+1ef0:  subi	r20, 254
+1ef2:  sbci	r21, 255
+1ef4:  ldd	r24, Y+0
+1ef6:  ldd	r25, Y+1
+1ef8:  add	r20, r24
+1efa:  adc	r21, r25
+1efc:  std	Z+1, r21
+1efe:  std	Z+0, r20
+1f00:  ldd	r24, Y+2
+1f02:  ldd	r25, Y+3
+1f04:  std	Z+3, r25
+1f06:  std	Z+2, r24
+1f08:  cp	r18, r1
+1f0a:  cpc	r19, r1
+1f0c:  breq	.+2
+1f0e:  rjmp	.-160
+1f10:  sts	1818, r31
+1f14:  sts	1817, r30
+1f18:  rjmp	.-196
+1f1a:  movw	r30, r26
+1f1c:  movw	r26, r24
+1f1e:  rjmp	.-128
+1f20:  std	Z+3, r1
+1f22:  std	Z+2, r1
+1f24:  rjmp	.-82
+1f26:  push	r4
+1f28:  push	r5
+1f2a:  push	r6
+1f2c:  push	r7
+1f2e:  push	r8
+1f30:  push	r9
+1f32:  push	r10
+1f34:  push	r11
+1f36:  push	r12
+1f38:  push	r13
+1f3a:  push	r14
+1f3c:  push	r15
+1f3e:  push	r16
+1f40:  push	r17
+1f42:  push	r28
+1f44:  push	r29
+1f46:  movw	r16, r24
+1f48:  sbiw	r24, 0
+1f4a:  brne	.+38
+1f4c:  movw	r24, r22
+1f4e:  pop	r29
+1f50:  pop	r28
+1f52:  pop	r17
+1f54:  pop	r16
+1f56:  pop	r15
+1f58:  pop	r14
+1f5a:  pop	r13
+1f5c:  pop	r12
+1f5e:  pop	r11
+1f60:  pop	r10
+1f62:  pop	r9
+1f64:  pop	r8
+1f66:  pop	r7
+1f68:  pop	r6
+1f6a:  pop	r5
+1f6c:  pop	r4
+1f6e:  jmp	7440
+1f72:  movw	r30, r24
+1f74:  add	r30, r22
+1f76:  adc	r31, r23
+1f78:  movw	r18, r24
+1f7a:  subi	r18, 2
+1f7c:  sbc	r19, r1
+1f7e:  cp	r30, r18
+1f80:  cpc	r31, r19
+1f82:  brsh	.+2
+1f84:  rjmp	.+348
+1f86:  movw	r26, r18
+1f88:  ld	r28, X+
+1f8a:  ld	r29, X
+1f8c:  sbiw	r26, 1
+1f8e:  cp	r28, r22
+1f90:  cpc	r29, r23
+1f92:  brlo	.+72
+1f94:  cpi	r28, 5
+1f96:  cpc	r29, r1
+1f98:  brlo	.+30
+1f9a:  movw	r24, r28
+1f9c:  sbiw	r24, 4
+1f9e:  cp	r24, r22
+1fa0:  cpc	r25, r23
+1fa2:  brlo	.+20
+1fa4:  sub	r28, r22
+1fa6:  sbc	r29, r23
+1fa8:  sbiw	r28, 2
+1faa:  st	Z+, r28
+1fac:  st	Z+, r29
+1fae:  st	X+, r22
+1fb0:  st	X, r23
+1fb2:  movw	r24, r30
+1fb4:  call	7752
+1fb8:  movw	r24, r16
+1fba:  pop	r29
+1fbc:  pop	r28
+1fbe:  pop	r17
+1fc0:  pop	r16
+1fc2:  pop	r15
+1fc4:  pop	r14
+1fc6:  pop	r13
+1fc8:  pop	r12
+1fca:  pop	r11
+1fcc:  pop	r10
+1fce:  pop	r9
+1fd0:  pop	r8
+1fd2:  pop	r7
+1fd4:  pop	r6
+1fd6:  pop	r5
+1fd8:  pop	r4
+1fda:  ret
+1fdc:  movw	r10, r22
+1fde:  sub	r10, r28
+1fe0:  sbc	r11, r29
+1fe2:  movw	r8, r24
+1fe4:  add	r8, r28
+1fe6:  adc	r9, r29
+1fe8:  lds	r26, 1817
+1fec:  lds	r27, 1818
+1ff0:  mov	r5, r1
+1ff2:  mov	r4, r1
+1ff4:  mov	r15, r1
+1ff6:  mov	r14, r1
+1ff8:  sbiw	r26, 0
+1ffa:  brne	.+76
+1ffc:  lds	r24, 1815
+2000:  lds	r25, 1816
+2004:  cp	r24, r8
+2006:  cpc	r25, r9
+2008:  breq	.+2
+200a:  rjmp	.+184
+200c:  cp	r4, r22
+200e:  cpc	r5, r23
+2010:  brlo	.+2
+2012:  rjmp	.+176
+2014:  lds	r24, 532
+2018:  lds	r25, 533
+201c:  sbiw	r24, 0
+201e:  brne	.+16
+2020:  in	r24, 61
+2022:  in	r25, 62
+2024:  lds	r20, 536
+2028:  lds	r21, 537
+202c:  sub	r24, r20
+202e:  sbc	r25, r21
+2030:  cp	r30, r24
+2032:  cpc	r31, r25
+2034:  brlo	.+2
+2036:  rjmp	.+170
+2038:  sts	1816, r31
+203c:  sts	1815, r30
+2040:  movw	r30, r18
+2042:  std	Z+1, r23
+2044:  std	Z+0, r22
+2046:  rjmp	.-144
+2048:  ld	r24, X+
+204a:  ld	r25, X
+204c:  sbiw	r26, 1
+204e:  adiw	r26, 2
+2050:  ld	r6, X
+2052:  sbiw	r26, 2
+2054:  adiw	r26, 3
+2056:  ld	r7, X
+2058:  sbiw	r26, 3
+205a:  cp	r26, r8
+205c:  cpc	r27, r9
+205e:  brne	.+86
+2060:  movw	r12, r24
+2062:  ldi	r20, 2
+2064:  add	r12, r20
+2066:  adc	r13, r1
+2068:  cp	r12, r10
+206a:  cpc	r13, r11
+206c:  brlo	.+72
+206e:  movw	r20, r24
+2070:  sub	r20, r10
+2072:  sbc	r21, r11
+2074:  movw	r26, r20
+2076:  adiw	r26, 2
+2078:  sbiw	r26, 5
+207a:  brlo	.+32
+207c:  std	Z+2, r6
+207e:  std	Z+3, r7
+2080:  std	Z+1, r21
+2082:  std	Z+0, r20
+2084:  movw	r26, r18
+2086:  st	X+, r22
+2088:  st	X, r23
+208a:  cp	r14, r1
+208c:  cpc	r15, r1
+208e:  breq	.+28
+2090:  movw	r26, r14
+2092:  adiw	r26, 3
+2094:  st	X, r31
+2096:  st	-X, r30
+2098:  sbiw	r26, 2
+209a:  rjmp	.-228
+209c:  adiw	r28, 2
+209e:  add	r24, r28
+20a0:  adc	r25, r29
+20a2:  movw	r30, r18
+20a4:  std	Z+1, r25
+20a6:  std	Z+0, r24
+20a8:  movw	r30, r6
+20aa:  rjmp	.-34
+20ac:  sts	1818, r31
+20b0:  sts	1817, r30
+20b4:  rjmp	.-254
+20b6:  cp	r4, r24
+20b8:  cpc	r5, r25
+20ba:  brsh	.+2
+20bc:  movw	r4, r24
+20be:  movw	r14, r26
+20c0:  movw	r26, r6
+20c2:  rjmp	.-204
+20c4:  movw	r24, r22
+20c6:  call	7440
+20ca:  movw	r14, r24
+20cc:  sbiw	r24, 0
+20ce:  breq	.+18
+20d0:  movw	r20, r28
+20d2:  movw	r22, r16
+20d4:  call	8502
+20d8:  movw	r24, r16
+20da:  call	7752
+20de:  movw	r16, r14
+20e0:  rjmp	.-298
+20e2:  ldi	r17, 0
+20e4:  ldi	r16, 0
+20e6:  rjmp	.-304
+20e8:  ldi	r24, 1
+20ea:  ldi	r25, 0
+20ec:  cli
+20ee:  jmp	8534
+20f2:  cpse	r25, r1
+20f4:  ret
+20f6:  subi	r24, 97
+20f8:  subi	r24, 26
+20fa:  brsh	.+2
+20fc:  subi	r24, 32
+20fe:  subi	r24, 133
+2100:  ret
+2102:  movw	r30, r22
+2104:  movw	r26, r24
+2106:  rjmp	.+4
+2108:  ld	r0, Z+
+210a:  st	X+, r0
+210c:  subi	r20, 1
+210e:  sbci	r21, 0
+2110:  brsh	.-10
+2112:  ret
+2114:  movw	r30, r22
+2116:  movw	r26, r24
+2118:  ld	r0, Z+
+211a:  st	X+, r0
+211c:  tst	r0
+211e:  brne	.-8
+2120:  ret
+2122:  ldi	r17, 1
+2124:  ldi	r28, 141
+2126:  ldi	r29, 1
+2128:  ldi	r16, 0
+212a:  rjmp	.+12
+212c:  mov	r24, r16
+212e:  movw	r30, r28
+2130:  call	7424
+2134:  adiw	r28, 1
+2136:  adc	r16, r1
+2138:  cpi	r28, 142
+213a:  cpc	r29, r17
+213c:  ldi	r24, 0
+213e:  cpc	r16, r24
+2140:  brne	.-22
+2142:  cli
+2144:  rjmp	.-2
+2146:  mov	r3, r18
+2148:  cpc	r17, r27
+214a:  nop
+214c:  nop
+214e:  muls	r22, r17
+2150:  movw	r24, r2
+2152:  movw	r30, r16
+2154:  muls	r28, r25
+2156:  muls	r18, r25
+2158:  muls	r16, r23
+215a:  muls	r17, r27
+215c:  nop
+215e:  nop
+2160:  cpc	r2, r1
+2162:  cpc	r1, r13
+2164:  ori	r21, 82
+2166:  ori	r22, 193
+2168:  ori	r21, 147
+216a:  sbci	r22, 125
+216c:  ori	r22, 21
+216e:  mov	r23, r2
+2170:  sbci	r20, 215
+2172:  mov	r20, r1
+2174:  ori	r20, 65
+2176:  ori	r22, 244
+2178:  subi	r20, 243
+217a:  sbci	r21, 16
+217c:  subi	r21, 51
+217e:  subi	r21, 95
+2180:  subi	r20, 243
+2182:  sbci	r21, 16
+2184:  subi	r21, 51
+2186:  sbci	r21, 79
+2188:  subi	r20, 243
+218a:  sbci	r21, 144
+218c:  sbci	r20, 252
+218e:  subi	r21, 244
+2190:  subi	r21, 5
+2192:  sbci	r16, 80
+2194:  sbci	r20, 62
+2196:  subi	r21, 15
+2198:  sbci	r20, 201
+219a:  subi	r20, 79
+219c:  sbci	r21, 79
+219e:  sbci	r19, 86
+21a0:  sbci	r19, 38
+21a2:  cpi	r19, 119
+21a4:  cpi	r19, 150
+21a6:  cpi	r19, 153
+21a8:  ori	r22, 193
+21aa:  ori	r21, 147
+21ac:  sbci	r22, 125
+21ae:  ori	r22, 21
+21b0:  mov	r23, r2
+21b2:  sbci	r20, 103
+21b4:  cpi	r20, 83
+21b6:  cpi	r19, 0
+21b8:  sbci	r16, 80
+21ba:  sbci	r20, 62
+21bc:  sbci	r21, 143
+21be:  sbci	r20, 116
+21c0:  subi	r21, 95
+21c2:  subi	r20, 243
+21c4:  sbci	r20, 193
+21c6:  subi	r21, 244
+21c8:  subi	r21, 5
+21ca:  sbci	r16, 80
+21cc:  sbci	r20, 62
+21ce:  sbci	r21, 143
+21d0:  sbci	r20, 116
+21d2:  sbci	r21, 79
+21d4:  subi	r20, 243
+21d6:  sbci	r20, 193
+21d8:  subi	r21, 244
+21da:  sbci	r20, 228
+21dc:  sbci	r16, 32
+21de:  sbci	r21, 228
+21e0:  sbci	r21, 223
+21e2:  sbci	r20, 57
+21e4:  subi	r20, 254
+21e6:  sbci	r20, 243
+21e8:  cpi	r20, 29
+21ea:  sbci	r16, 32
+21ec:  sbci	r21, 228
+21ee:  sbci	r21, 223
+21f0:  sbci	r20, 57
+21f2:  subi	r20, 254
+21f4:  sbci	r20, 243
+21f6:  cpi	r20, 45
+21f8:  sbci	r16, 32
+21fa:  sbci	r21, 228
+21fc:  sbci	r21, 223
+21fe:  sbci	r20, 57
+2200:  subi	r20, 254
+2202:  sbci	r20, 243
+2204:  cpi	r20, 61
+2206:  sbci	r16, 32
+2208:  sbci	r21, 228
+220a:  sbci	r21, 63
+220c:  sbci	r20, 223
+220e:  subi	r21, 79
+2210:  sbci	r20, 127
+2212:  sbci	r16, 32
+2214:  sbci	r21, 228
+2216:  subi	r21, 79
+2218:  sbci	r20, 197
+221a:  sbci	r16, 32
+221c:  sbci	r21, 228
+221e:  subi	r21, 15
+2220:  subi	r20, 254
+2222:  subi	r21, 3
+2224:  subi	r20, 43
+2226:  sbci	r16, 32
+2228:  sbci	r21, 228
+222a:  sbci	r21, 223
+222c:  subi	r20, 43
+222e:  sbci	r16, 32
+2230:  sbci	r21, 228
+2232:  subi	r21, 63
+2234:  sbci	r20, 229
+2236:  subi	r20, 254
+2238:  sbci	r20, 212
+223a:  subi	r20, 254
+223c:  sbci	r20, 30
+223e:  cpi	r21, 22
+2240:  sbci	r16, 32
+2242:  sbci	r21, 228
+2244:  sbci	r21, 31
+2246:  sbci	r20, 100
+2248:  sbci	r16, 32
+224a:  sbci	r21, 228
+224c:  sbci	r21, 239
+224e:  subi	r20, 97
+2250:  subi	r20, 254
+2252:  subi	r20, 81
+2254:  subi	r20, 254
+2256:  sbci	r20, 29
+2258:  subi	r20, 62
+225a:  subi	r20, 254
+225c:  sbci	r21, 192
+225e:  subi	r20, 145
+2260:  sbci	r16, 32
+2262:  sbci	r21, 228
+2264:  subi	r21, 15
+2266:  sbci	r20, 201
+2268:  subi	r20, 79
+226a:  sbci	r16, 32
+226c:  sbci	r21, 228
+226e:  sbci	r21, 63
+2270:  subi	r20, 15
+2272:  subi	r20, 76
+2274:  sbci	r16, 32
+2276:  sbci	r21, 228
+2278:  subi	r21, 111
+227a:  sbci	r20, 207
+227c:  sbci	r16, 32
+227e:  sbci	r21, 228
+2280:  subi	r21, 47
+2282:  subi	r20, 101
+2284:  subi	r20, 37
+2286:  sbci	r21, 147
+2288:  sbci	r20, 239
+228a:  nop
