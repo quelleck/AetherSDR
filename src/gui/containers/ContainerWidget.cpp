@@ -64,7 +64,24 @@ QWidget* ContainerWidget::setContent(QWidget* content)
     m_content = content;
     if (m_content && m_bodyLayout) {
         m_content->setParent(m_body);
-        m_bodyLayout->addWidget(m_content, 1);
+        // Anchor non-expanding content to the TOP of the body so any surplus
+        // height collects BELOW it, never as a blank band above the controls.
+        // A Fixed-vertical applet (e.g. TxApplet) added with stretch 1 gets
+        // centred when the body is taller than its sizeHint — that is the
+        // "TX Controls panel grows mainly in upper space" symptom, seen when
+        // the container is handed more height than it needs: a floating
+        // pop-out resized taller, or (before #3461's stack spacer) a few-tile
+        // side panel. Content that genuinely wants to grow (waterfalls, the
+        // RX passband — a QSizePolicy carrying ExpandFlag) keeps stretch 1 so
+        // it still fills the body. A bare vertical alignment leaves the
+        // horizontal dimension free, so width/#3451 float-fill is unaffected.
+        // (#2302)
+        const bool expandsVertically =
+            (m_content->sizePolicy().verticalPolicy() & QSizePolicy::ExpandFlag) != 0;
+        if (expandsVertically)
+            m_bodyLayout->addWidget(m_content, 1);
+        else
+            m_bodyLayout->addWidget(m_content, 0, Qt::AlignTop);
         m_content->show();
         applyWidthPolicyTo(m_content);
     }
