@@ -1169,7 +1169,7 @@ void MainWindow::syncKiwiSdrPanadapterUiState(const QString& panId)
             spectrum->wfColorScheme(), spectrum->showGrid(),
             spectrum->fftLineWidth(), spectrum->wfAutoBlackRadioSide(),
             spectrum->spectrumRenderMode(), spectrum->dssFloorDepth(),
-            spectrum->dssGain());
+            spectrum->dssGain(), spectrum->fftLineColor());
     };
 
     spectrum->setKiwiSdrDisplaySourceKiwi(displayKiwi);
