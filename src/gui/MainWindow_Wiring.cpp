@@ -39,6 +39,7 @@
 #include "core/PeripheralSettings.h"
 #include "core/KiwiSdrManager.h"
 #include "core/KiwiSdrProtocol.h"
+#include "SliceLabel.h"
 #include "SpectrumOverlayMenu.h"
 #include "SpectrumWidget.h"
 #include "core/AdaptiveFilterEngine.h"
@@ -53,6 +54,7 @@
 #endif
 #include "models/ProfileLoadCommand.h"
 #include "models/RadioModel.h"
+#include "models/SliceLinkPolicy.h"
 #include "models/SliceModel.h"
 
 #include <QDateTime>
@@ -621,6 +623,279 @@ void MainWindow::recenterCenterLocks()
     for (const QString& panId : panIds) {
         recenterCenterLockForPan(panId);
     }
+}
+
+// ── Slice Link — cross-panadapter bidirectional VFO link ────────────────────
+// Two owned slices kept on frequency: each member's frequencyChanged is
+// classified by the pure policy (models/SliceLinkPolicy.h) and, when it is a
+// genuine move, replayed onto the peer through applyTuneRequest, inheriting
+// the lock/SWR guards, reveal/pan-follow, and Kiwi virtual tracking.
+
+int MainWindow::sliceLinkPeerOf(int sliceId) const
+{
+    if (!m_sliceLink.active()) {
+        return -1;
+    }
+    if (sliceId == m_sliceLink.aId) {
+        return m_sliceLink.bId;
+    }
+    if (sliceId == m_sliceLink.bId) {
+        return m_sliceLink.aId;
+    }
+    return -1;
+}
+
+void MainWindow::engageSliceLink(int aId, int bId)
+{
+    SliceModel* a = m_radioModel.slice(aId);
+    SliceModel* b = m_radioModel.slice(bId);
+    const bool eligible = a && b
+        && SliceLinkPolicy::canLink(aId, bId,
+                                    m_radioModel.sliceMayBelongToUs(aId),
+                                    m_radioModel.sliceMayBelongToUs(bId),
+                                    a->diversity(), b->diversity());
+    if (!eligible) {
+        qDebug() << "MainWindow: slice link refused" << aId << bId;
+        return;
+    }
+    if (m_sliceLink.active()) {
+        // One link at a time; a new request replaces the old pair.
+        dissolveSliceLink("replaced by a new link");
+    }
+
+    m_sliceLink.aId = aId;
+    m_sliceLink.bId = bId;
+    m_sliceLink.a = a;
+    m_sliceLink.b = b;
+    ++m_sliceLinkSettleGeneration;
+    for (SliceModel* s : {a, b}) {
+        m_sliceLink.connections
+            << connect(s, &SliceModel::frequencyChanged, this,
+                       [this, s](double mhz) {
+                           onSliceLinkFrequencyChanged(s, mhz);
+                       })
+            << connect(s, &SliceModel::lockedChanged, this,
+                       [this, s](bool locked) {
+                           onSliceLinkLockedChanged(s, locked);
+                       });
+    }
+    // Engaging is not a tune request: no initial converge — the first genuine
+    // move on either member syncs the pair (radio state stays authoritative).
+    qDebug() << "MainWindow: slice link engaged" << a->letter() << b->letter();
+    refreshSliceLinkUi();
+}
+
+void MainWindow::dissolveSliceLink(const char* reason)
+{
+    if (!m_sliceLink.active()) {
+        return;
+    }
+    for (const QMetaObject::Connection& c : m_sliceLink.connections) {
+        QObject::disconnect(c);
+    }
+    m_sliceLink = SliceLinkState{};
+    ++m_sliceLinkSettleGeneration;  // invalidate any pending settle check
+    qDebug() << "MainWindow: slice link dissolved —" << reason;
+    refreshSliceLinkUi();
+}
+
+void MainWindow::onSliceLinkFrequencyChanged(SliceModel* s, double mhz)
+{
+    if (m_applyingSliceLink) {
+        // The synchronous optimistic emit inside our own applyTuneRequest call.
+        return;
+    }
+    if (!m_sliceLink.active() || !s) {
+        return;
+    }
+    if (!m_sliceLink.a || !m_sliceLink.b) {
+        dissolveSliceLink("member destroyed");
+        return;
+    }
+    const int id = s->sliceId();
+    if (sliceLinkPeerOf(id) < 0) {
+        return;
+    }
+    // Continuous Multi-Flex guard: never keep driving a pair we no longer own.
+    if (!m_radioModel.sliceMayBelongToUs(m_sliceLink.aId)
+        || !m_radioModel.sliceMayBelongToUs(m_sliceLink.bId)) {
+        dissolveSliceLink("member ownership lost");
+        return;
+    }
+    SliceModel* peer =
+        (s == m_sliceLink.a.data()) ? m_sliceLink.b.data() : m_sliceLink.a.data();
+    const bool changedIsA = (id == m_sliceLink.aId);
+    SliceLinkPolicy::PendingWrites& changedRing =
+        changedIsA ? m_sliceLink.pendingA : m_sliceLink.pendingB;
+    SliceLinkPolicy::PendingWrites& peerRing =
+        changedIsA ? m_sliceLink.pendingB : m_sliceLink.pendingA;
+
+    SliceLinkPolicy::Input in;
+    in.changedHz = llround(mhz * 1e6);
+    in.nowMs = QDateTime::currentMSecsSinceEpoch();
+    in.peerLocked = peer->isLocked();
+    in.swrSweepRunning = m_swrSweep.running;
+
+    const SliceLinkPolicy::Decision d = SliceLinkPolicy::classify(in, changedRing);
+    if (d.consumeThrough >= 0) {
+        changedRing.consumeThrough(d.consumeThrough);
+    }
+    if (d.becomeOrigin) {
+        m_sliceLink.originId = id;
+    }
+
+    switch (d.action) {
+    case SliceLinkPolicy::Action::Propagate: {
+        if (m_sliceLink.suspendedByLock) {
+            m_sliceLink.suspendedByLock = false;
+            refreshSliceLinkUi();
+        }
+        const qint64 peerHz = llround(peer->frequency() * 1e6);
+        if (peerHz == in.changedHz) {
+            // Already converged (e.g. a settle re-assert) — no write, no echo.
+            return;
+        }
+        peerRing.record(in.changedHz, in.nowMs);
+        const TuneIntent intent =
+            SliceLinkPolicy::isIncrementalDelta(peerHz, in.changedHz)
+                ? TuneIntent::IncrementalTune
+                : TuneIntent::AbsoluteJump;
+        m_applyingSliceLink = true;
+        applyTuneRequest(peer, mhz, intent, "slice-link");
+        m_applyingSliceLink = false;
+        scheduleSliceLinkSettleCheck();
+        break;
+    }
+    case SliceLinkPolicy::Action::SuspendLocked:
+        if (!m_sliceLink.suspendedByLock) {
+            m_sliceLink.suspendedByLock = true;
+            refreshSliceLinkUi();
+        }
+        break;
+    case SliceLinkPolicy::Action::IgnoreEcho:
+        // The residual misclassification hole (a genuine move landing on a
+        // still-pending value) is closed by the settle check re-asserting
+        // the last genuine mover once the pair goes quiet.
+        scheduleSliceLinkSettleCheck();
+        break;
+    case SliceLinkPolicy::Action::IgnoreSweep:
+        break;
+    }
+}
+
+void MainWindow::onSliceLinkLockedChanged(SliceModel* s, bool locked)
+{
+    Q_UNUSED(s);
+    // lockedChanged is emitted unconditionally on status refreshes, so this
+    // must be idempotent: act only on an unlock while suspended.
+    if (locked || !m_sliceLink.active() || !m_sliceLink.suspendedByLock) {
+        return;
+    }
+    if (!m_sliceLink.a || !m_sliceLink.b) {
+        dissolveSliceLink("member destroyed");
+        return;
+    }
+    SliceModel* origin = (m_sliceLink.originId == m_sliceLink.aId)
+                             ? m_sliceLink.a.data()
+                             : m_sliceLink.b.data();
+    SliceModel* peer = (origin == m_sliceLink.a.data()) ? m_sliceLink.b.data()
+                                                        : m_sliceLink.a.data();
+    if (!origin || !peer || peer->isLocked()) {
+        return;
+    }
+    m_sliceLink.suspendedByLock = false;
+    refreshSliceLinkUi();
+    // Re-converge via the settle check rather than tuning the peer in the
+    // same breath as the unlock: the radio applies its own unlock with some
+    // latency, and a tune sent immediately after `slice unlock` is refused
+    // radio-side (observed on a FLEX-8600) — the refusal echo would then
+    // propagate the peer's stale frequency backwards over the origin.
+    // kSettleMs later the unlock has landed and the normal diverged-pair
+    // re-assert converges the peer to the origin.
+    scheduleSliceLinkSettleCheck();
+}
+
+void MainWindow::scheduleSliceLinkSettleCheck()
+{
+    // Trailing convergence net: kSettleMs after the most recent link event
+    // (each event bumps the generation, so only the last scheduled check
+    // acts), re-assert the last genuine mover if the pair is still diverged.
+    const quint32 generation = ++m_sliceLinkSettleGeneration;
+    QTimer::singleShot(static_cast<int>(SliceLinkPolicy::kSettleMs), this,
+                       [this, generation]() {
+        if (generation != m_sliceLinkSettleGeneration || !m_sliceLink.active()
+            || m_sliceLink.suspendedByLock) {
+            return;
+        }
+        SliceModel* origin = (m_sliceLink.originId == m_sliceLink.aId)
+                                 ? m_sliceLink.a.data()
+                                 : m_sliceLink.b.data();
+        SliceModel* peer = (m_sliceLink.originId == m_sliceLink.aId)
+                               ? m_sliceLink.b.data()
+                               : m_sliceLink.a.data();
+        if (!origin || !peer || m_sliceLink.originId < 0) {
+            return;
+        }
+        if (llround(origin->frequency() * 1e6)
+            == llround(peer->frequency() * 1e6)) {
+            return;
+        }
+        onSliceLinkFrequencyChanged(origin, origin->frequency());
+    });
+}
+
+void MainWindow::refreshSliceLinkUi()
+{
+    // Push the pair + the eligible-peer roster to every pan's spectrum: the
+    // link is cross-pan, so a pan's context menu needs peers its own
+    // overlays can't see.
+    QVector<SpectrumWidget::SliceLinkCandidate> candidates;
+    const QList<SliceModel*> slices = m_radioModel.slices();
+    for (SliceModel* s : slices) {
+        if (!s || !m_radioModel.sliceMayBelongToUs(s->sliceId())
+            || s->diversity()) {
+            continue;
+        }
+        candidates.append({s->sliceId(),
+                           SliceLabel::unicodeForm(s->sliceId(), s->letter())});
+    }
+    if (!m_panStack) {
+        return;
+    }
+    const auto applets = m_panStack->allApplets();
+    for (PanadapterApplet* applet : applets) {
+        if (applet && applet->spectrumWidget()) {
+            SpectrumWidget* sw = applet->spectrumWidget();
+            sw->setSliceLinkCandidates(candidates);
+            sw->setSliceLinkPair(m_sliceLink.aId, m_sliceLink.bId,
+                                 m_sliceLink.suspendedByLock);
+        }
+    }
+}
+
+QJsonObject MainWindow::automationSetSliceLink(int aId, int bId, bool on)
+{
+    if (!on) {
+        if (m_sliceLink.active() && sliceLinkPeerOf(aId) == bId) {
+            dissolveSliceLink("bridge request");
+        }
+        return QJsonObject{{QStringLiteral("ok"), true},
+                           {QStringLiteral("linked"), false}};
+    }
+    engageSliceLink(aId, bId);
+    if (sliceLinkPeerOf(aId) != bId) {
+        return QJsonObject{
+            {QStringLiteral("ok"), false},
+            {QStringLiteral("error"),
+             QStringLiteral("refused: slices %1 and %2 are not linkable "
+                            "(unknown, foreign, diversity, or identical)")
+                 .arg(aId)
+                 .arg(bId)}};
+    }
+    return QJsonObject{{QStringLiteral("ok"), true},
+                       {QStringLiteral("linked"), true},
+                       {QStringLiteral("a"), aId},
+                       {QStringLiteral("b"), bId}};
 }
 
 void MainWindow::syncActiveSliceSquelchLineToSpectrums()
@@ -1482,6 +1757,18 @@ void MainWindow::onSliceAdded(SliceModel* s)
     // reflected on the panadapter, not just GUI-initiated split. (#3726)
     connect(s, &SliceModel::txSliceChanged, this, [this](bool) { updateSplitState(); });
 
+    // Slice Link bookkeeping: the eligible-peer roster follows diversity and
+    // letter changes; a member entering diversity dissolves the link (the
+    // radio couples diversity pairs itself — G4).
+    connect(s, &SliceModel::diversityChanged, this, [this, s](bool on) {
+        if (on && sliceLinkPeerOf(s->sliceId()) >= 0) {
+            dissolveSliceLink("member entered diversity");
+        }
+        refreshSliceLinkUi();
+    });
+    connect(s, &SliceModel::letterChanged, this,
+            [this](const QString&) { refreshSliceLinkUi(); });
+
     // Reset band-stack auto-save dwell timer on every active-slice tune
     connect(s, &SliceModel::frequencyChanged, this, [this, s]() {
         if (s->sliceId() != m_activeSliceId) return;
@@ -1521,6 +1808,8 @@ void MainWindow::onSliceAdded(SliceModel* s)
     // created the TX slice out-of-band). Re-derive the split-pair from the model
     // so the panadapter pairs it without a GUI action. (#3726)
     updateSplitState();
+
+    refreshSliceLinkUi();
 }
 
 void MainWindow::onSliceRemoved(int id)
@@ -1544,6 +1833,22 @@ void MainWindow::onSliceRemoved(int id)
         clearCenterLockForSlice(id, /*clearPersistedIntent=*/true);
     }
     m_centerLockTuneHoldBySlice.remove(id);
+
+    // Slice Link: dissolve when a member is genuinely going away, using the
+    // same live-vs-prune reasoning as the Center Lock block above but keyed
+    // on object identity — on the post-reconnect stale prune the id already
+    // names a live new-session slice, so only dissolve when that live slice
+    // is NOT the object the link holds (i.e. the prune targets our member).
+    if (m_sliceLink.active()
+        && (id == m_sliceLink.aId || id == m_sliceLink.bId)) {
+        SliceModel* live = m_radioModel.slice(id);
+        SliceModel* member = (id == m_sliceLink.aId) ? m_sliceLink.a.data()
+                                                     : m_sliceLink.b.data();
+        if (!live || live != member) {
+            dissolveSliceLink("member slice removed");
+        }
+    }
+    refreshSliceLinkUi();
 
     // A band-stack recall (band_persistence) DROPS and RE-CREATES the slice
     // (same id, new band) instead of retuning it, which would tear down a
@@ -3398,8 +3703,17 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
 
         setCenterLockForPan(panId, sliceId, true);
     });
+    connect(sw, &SpectrumWidget::sliceLinkRequested,
+            this, [this](int aSliceId, int bSliceId, bool on) {
+        if (on) {
+            engageSliceLink(aSliceId, bSliceId);
+        } else if (sliceLinkPeerOf(aSliceId) == bSliceId) {
+            dissolveSliceLink("menu request");
+        }
+    });
     restoreCenterLockForPan(applet->panId());
     sw->setCenterLockSliceId(centerLockSliceForPan(applet->panId()));
+    refreshSliceLinkUi();
 
     // ── Spot trigger — notify the radio/TCI clients when a spot label is clicked (#341)
     connect(sw, &SpectrumWidget::spotTriggered, this, [this, applet](int spotIndex) {
