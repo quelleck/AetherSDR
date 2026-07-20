@@ -5634,7 +5634,12 @@ QJsonObject AutomationServer::doTune(const QString& value, const QString& id)
         for (SliceModel* c : m_radioModel->slices())
             if (c->sliceId() == sliceId) { s = c; break; }
         if (!s)
-            return err(QStringLiteral("tune: no slice with id ") + QString::number(sliceId));
+            return err(QStringLiteral("no slice with id ") + QString::number(sliceId));
+        // Mirror the GUI path's Multi-Flex gate (MainWindow::automationTune):
+        // a headless caller must not drive another client's slice either.
+        if (!m_radioModel->sliceMayBelongToUs(sliceId))
+            return err(QStringLiteral("refused: slice ") + QString::number(sliceId)
+                       + QStringLiteral(" belongs to another client"));
     } else {
         for (SliceModel* c : m_radioModel->slices())
             if (c->isActive()) { s = c; break; }
