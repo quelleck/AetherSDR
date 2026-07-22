@@ -2916,8 +2916,19 @@ QJsonObject AutomationServer::handleLine(const QByteArray& line, QLocalSocket* s
         // like `value` above; a bare .toString() would silently coerce a
         // numeric id to "" and the request would act on the wrong target.
         const QJsonValue idv = obj.value(QStringLiteral("id"));
-        if (idv.isString())      a.id = idv.toString();
-        else if (idv.isDouble()) a.id = QString::number(idv.toDouble());
+        if (idv.isString()) {
+            a.id = idv.toString();
+        } else if (idv.isDouble()) {
+            // Keep enough precision for downstream integer validation. The
+            // default six significant digits can round 1.0000001 to "1" and
+            // silently retarget a request to a real slice.
+            a.id = QString::number(idv.toDouble(), 'g',
+                                   std::numeric_limits<double>::max_digits10);
+        } else if (obj.contains(QStringLiteral("id"))) {
+            // An omitted id intentionally selects the active/default target;
+            // an explicitly malformed id must not collapse to that sentinel.
+            return err(QStringLiteral("id must be a string or number"));
+        }
         a.title    = obj.value(QStringLiteral("title")).toString();
         a.detail   = obj.value(QStringLiteral("detail")).toString();
         a.tone     = obj.value(QStringLiteral("tone")).toString();
