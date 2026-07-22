@@ -3663,6 +3663,12 @@ target_include_directories(transmit_inhibit_policy_test PRIVATE src)
 target_link_libraries(transmit_inhibit_policy_test PRIVATE Qt6::Core)
 add_test(NAME transmit_inhibit_policy_test COMMAND transmit_inhibit_policy_test)
 
+add_executable(kiwi_sdr_tx_mute_policy_test
+    tests/kiwi_sdr_tx_mute_policy_test.cpp
+)
+target_include_directories(kiwi_sdr_tx_mute_policy_test PRIVATE src)
+add_test(NAME kiwi_sdr_tx_mute_policy_test COMMAND kiwi_sdr_tx_mute_policy_test)
+
 # Container system Phase 1 tests — needs QApplication + Widgets.
 add_executable(container_widget_test
     tests/container_widget_test.cpp

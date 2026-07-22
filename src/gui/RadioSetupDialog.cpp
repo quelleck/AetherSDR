@@ -3993,6 +3993,22 @@ QWidget* RadioSetupDialog::buildAntennaNamesTab()
                     + kCheckBoxIndicator);
                 rowLayout->addWidget(autoCheck, 4, 0, 1, 2, Qt::AlignLeft);
 
+                auto* keepTxAudioCheck = new QCheckBox;
+                keepTxAudioCheck->setText("Keep audio during TX");
+                keepTxAudioCheck->setChecked(profile.keepAudioDuringTx);
+                keepTxAudioCheck->setAccessibleName(
+                    "Keep KiwiSDR audio during transmit");
+                keepTxAudioCheck->setToolTip(
+                    "Keep playing this receiver's audio while transmitting.\n"
+                    "Off: its audio is silenced during TX and resumes "
+                    "immediately at unkey.");
+                AetherSDR::ThemeManager::instance().applyStyleSheet(
+                    keepTxAudioCheck,
+                    "QCheckBox { color: {{color.text.primary}}; font-size: 12px; spacing: 8px; }"
+                    + kCheckBoxIndicator);
+                rowLayout->addWidget(keepTxAudioCheck, 5, 0, 1, 2,
+                                     Qt::AlignLeft);
+
                 const bool activeSession =
                     kiwiState == KiwiSdrClient::State::Connecting
                     || kiwiState == KiwiSdrClient::State::Waiting
@@ -4014,7 +4030,7 @@ QWidget* RadioSetupDialog::buildAntennaNamesTab()
                 kiwiRowsLayout->addWidget(rowFrame);
 
                 auto updateProfile = [this, profile, nameEdit, endpointEdit,
-                                      autoCheck] {
+                                      autoCheck, keepTxAudioCheck] {
                     const QString name = nameEdit->text().trimmed();
                     const QString endpoint =
                         KiwiSdrClient::normalizeEndpoint(endpointEdit->text());
@@ -4036,6 +4052,7 @@ QWidget* RadioSetupDialog::buildAntennaNamesTab()
                     updated.name = name;
                     updated.endpoint = endpoint;
                     updated.autoConnect = autoCheck->isChecked();
+                    updated.keepAudioDuringTx = keepTxAudioCheck->isChecked();
                     m_kiwiSdrManager->updateProfile(updated);
                 };
                 connect(nameEdit, &QLineEdit::editingFinished,
@@ -4052,6 +4069,8 @@ QWidget* RadioSetupDialog::buildAntennaNamesTab()
                         profile.id, passwordEdit->text());
                 });
                 connect(autoCheck, &QCheckBox::toggled,
+                        this, [updateProfile](bool) { updateProfile(); });
+                connect(keepTxAudioCheck, &QCheckBox::toggled,
                         this, [updateProfile](bool) { updateProfile(); });
                 connect(connectButton, &QPushButton::clicked,
                         this, [this, profile, activeSession] {

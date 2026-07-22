@@ -12,6 +12,7 @@
 #include "models/BandSettings.h"
 #include "models/AntennaGeniusModel.h"
 #include "core/AppSettings.h"
+#include "core/KiwiSdrTxMutePolicy.h"  // optimistic-unkey Kiwi mute latch
 #include "core/RadioMessageTypes.h"   // MessageSeverity for onRadioMessage slot
 #include "core/RadioDiscovery.h"
 #include "core/AudioEngine.h"
@@ -392,10 +393,12 @@ private:
     void restoreKiwiSdrSliceMute();
     bool kiwiSdrTransmitMuteRequired() const;
     void syncKiwiSdrTransmitMute();
+    void refreshKiwiSdrVirtualAudioControls();
     void setKiwiSdrVirtualAntennaForSlice(int sliceId, const QString& profileId);
     void clearKiwiSdrVirtualAntennaForSlice(int sliceId);
     void updateKiwiSdrVirtualTrackingForSlice(SliceModel* slice);
-    void updateKiwiSdrVirtualAudioControlsForSlice(SliceModel* slice);
+    void updateKiwiSdrVirtualAudioControlsForSlice(SliceModel* slice,
+                                                   bool includeEnable = true);
     void updateKiwiSdrVirtualReceiverControlsForSlice(SliceModel* slice);
     SliceModel* flexRxPanSourceSlice() const;
     void syncFlexRxPanToAudioEngine();
@@ -980,6 +983,8 @@ private:
     bool             m_kiwiSdrAudioMuteApplied{false};
     bool             m_kiwiSdrAudioMuteChanging{false};
     bool             m_kiwiSdrAudioTransmitMuted{false};
+    AetherSDR::KiwiSdrTxMuteLatch m_kiwiSdrTxMuteLatch;
+    int              m_kiwiSdrTxMaskEpoch{0};
     QMetaObject::Connection m_kiwiSdrAudioMuteConnection;
     QHash<int, bool> m_kiwiSdrVirtualPreviousMute;
     QSet<QString>    m_kiwiSdrFlexDisplayPans;
