@@ -964,6 +964,8 @@ void KiwiSdrManager::loadSettings()
         p.autoConnect = obj.value(QStringLiteral("autoConnect")).toBool(false);
         p.keepAudioDuringTx =
             obj.value(QStringLiteral("keepAudioDuringTx")).toBool(false);
+        p.resumeAudioAfterTxDelay =
+            obj.value(QStringLiteral("resumeAudioAfterTxDelay")).toBool(false);
         if (obj.contains(QStringLiteral("waterfallMinDbm"))
             || obj.contains(QStringLiteral("waterfallMaxDbm"))) {
             p.waterfallMinDbm = std::clamp(
@@ -1004,6 +1006,8 @@ void KiwiSdrManager::saveSettings() const
         obj.insert(QStringLiteral("endpoint"), normalizedProfileEndpoint(p.endpoint));
         obj.insert(QStringLiteral("autoConnect"), p.autoConnect);
         obj.insert(QStringLiteral("keepAudioDuringTx"), p.keepAudioDuringTx);
+        obj.insert(QStringLiteral("resumeAudioAfterTxDelay"),
+                   p.resumeAudioAfterTxDelay);
         obj.insert(QStringLiteral("waterfallAutoScale"), p.waterfallAutoScale);
         const int waterfallMinDbm = std::clamp(
             p.waterfallMinDbm,

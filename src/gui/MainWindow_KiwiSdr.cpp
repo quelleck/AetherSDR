@@ -14,6 +14,8 @@
 #include "core/KiwiSdrClient.h"
 #include "core/KiwiSdrManager.h"
 #include "core/KiwiSdrProtocol.h"
+#include "core/KiwiSdrTxMutePolicy.h"
+#include "core/ReceivePresentationSync.h"
 #include "core/LogManager.h"
 #include "models/BandSettings.h"
 #include "models/RadioModel.h"
@@ -1354,11 +1356,48 @@ void MainWindow::updateKiwiSdrVirtualAudioControlsForSlice(SliceModel* slice,
     const float gainPercent = slice->audioGain();
     const bool muted = slice->audioMute();
     const int pan = slice->audioPan();
-    const bool keepDuringTx =
-        m_kiwiSdrManager->profile(profileId).keepAudioDuringTx;
+    const KiwiSdrAntennaProfile profile = m_kiwiSdrManager->profile(profileId);
+    const bool keepDuringTx = profile.keepAudioDuringTx;
+    int resumeHoldMs = 0;
+    if (profile.resumeAudioAfterTxDelay && !keepDuringTx) {
+        // Prefer the receive-sync measurement of the Kiwi's ingest lag —
+        // but only for the profile it was actually measured against, and
+        // only while it maintains the same lock the sync engine itself
+        // requires before acting on it. Everything else falls back to
+        // baseLatencyMs as an ingest-lag proxy. The engine-side
+        // presentation holdback for this source delays playback beyond
+        // arrival, so it is added on top; kiwiSdrResumeHoldMs adds the
+        // guard for what none of these can see.
+        const ReceivePresentationSettings sync =
+            m_receivePresentationSync.settings();
+        const bool isSyncTarget =
+            profileId == receiveSyncDelayKiwiProfileId();
+        bool estimateValid = false;
+        int estimateOffsetMs = 0;
+        if (isSyncTarget && sync.enabled
+            && sync.mode == ReceiveSyncMode::AutoAssist
+            && sync.autoEstimate.valid
+            && (sync.autoEstimate.held
+                || sync.autoEstimate.confidence >= sync.autoLockConfidence)) {
+            estimateValid = true;
+            estimateOffsetMs = sync.autoEstimate.offsetMs;
+        } else if (isSyncTarget && sync.enabled
+                   && sync.mode == ReceiveSyncMode::Manual
+                   && sync.manualOffsetMs > 0) {
+            estimateValid = true;
+            estimateOffsetMs = sync.manualOffsetMs;
+        }
+        const int appliedDelayMs = receivePresentationDelayMs(
+            ReceivePresentationSource::KiwiSdr,
+            ReceivePresentationSurface::Audio, profileId);
+        resumeHoldMs = AetherSDR::kiwiSdrResumeHoldMs(
+            estimateValid, estimateOffsetMs, sync.baseLatencyMs,
+            appliedDelayMs);
+    }
     QMetaObject::invokeMethod(m_audio,
                               [audio = m_audio, profileId, gainPercent, muted,
-                               pan, keepDuringTx, includeEnable]() {
+                               pan, keepDuringTx, resumeHoldMs,
+                               includeEnable]() {
         if (includeEnable) {
             audio->setKiwiSdrAudioSourceEnabled(profileId, true);
         }
@@ -1366,6 +1405,7 @@ void MainWindow::updateKiwiSdrVirtualAudioControlsForSlice(SliceModel* slice,
         audio->setKiwiSdrAudioSourceMuted(profileId, muted);
         audio->setKiwiSdrAudioSourcePan(profileId, pan);
         audio->setKiwiSdrAudioSourceKeepDuringTx(profileId, keepDuringTx);
+        audio->setKiwiSdrAudioSourceResumeHold(profileId, resumeHoldMs);
     }, Qt::QueuedConnection);
 }
 
@@ -1567,6 +1607,12 @@ void MainWindow::syncKiwiSdrTransmitMute()
     }
 
     m_kiwiSdrAudioTransmitMuted = muted;
+    if (muted) {
+        // Key-down: re-push per-source audio controls so the resume hold
+        // that arms at the coming unkey uses the freshest sync estimate.
+        // Queued ahead of the mute flag below, so ordering is guaranteed.
+        refreshKiwiSdrVirtualAudioControls();
+    }
     QMetaObject::invokeMethod(m_audio, [audio = m_audio, muted]() {
         audio->setKiwiSdrAudioTransmitMuted(muted);
     }, Qt::QueuedConnection);

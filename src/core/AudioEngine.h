@@ -16,6 +16,7 @@
 #include <mutex>
 #include <QBuffer>
 #include <QByteArray>
+#include <QDeadlineTimer>
 #include <QElapsedTimer>
 #include <QFutureSynchronizer>
 #include <QPointer>
@@ -557,6 +558,7 @@ public slots:
     void setKiwiSdrAudioSourceGain(const QString& sourceId, float gainPercent);
     void setKiwiSdrAudioSourceMuted(const QString& sourceId, bool muted);
     void setKiwiSdrAudioSourceKeepDuringTx(const QString& sourceId, bool keep);
+    void setKiwiSdrAudioSourceResumeHold(const QString& sourceId, int holdMs);
     void setKiwiSdrAudioSourcePan(const QString& sourceId, int pan);
     void setKiwiSdrAudioTransmitMuted(bool muted);
     void removeKiwiSdrAudioSource(const QString& sourceId);
@@ -678,7 +680,13 @@ private:
         // the feed, jitter buffer, and DSP keep running through TX, and
         // only the final mix contribution is ramped to zero. With
         // keepAudioDuringTx set the source stays audible during TX.
+        // txResumeHoldMs > 0 keeps the gate closed that long past unkey so
+        // the resume lands on post-TX audio instead of the operator's own
+        // delayed TX tail (default QDeadlineTimer is already expired, so
+        // an unarmed deadline never holds the gate).
         bool keepAudioDuringTx{false};
+        int txResumeHoldMs{0};
+        QDeadlineTimer txResumeDeadline;
         float txGateGain{1.0f};
         bool prebuffering{false};
         bool dspInitializationPending{false};

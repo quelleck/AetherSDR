@@ -2312,11 +2312,13 @@ AudioEngine::AudioEngine(QObject* parent)
                     // Transmit gate: the source keeps draining at real-time
                     // rate through TX so playback rejoins the live stream at
                     // unkey; only its mix contribution ramps to zero. The
-                    // short ramp avoids a hard-mute click on both edges.
-                    const float gateTarget =
-                        (!kiwiSdrAudioTransmitMuted()
-                         || source->keepAudioDuringTx)
-                            ? 1.0f : 0.0f;
+                    // short ramp avoids a hard-mute click on both edges. A
+                    // pending resume deadline extends the hold past unkey
+                    // ("Resume audio after TX delay").
+                    const bool gateOpen = source->keepAudioDuringTx
+                        || (!kiwiSdrAudioTransmitMuted()
+                            && source->txResumeDeadline.hasExpired());
+                    const float gateTarget = gateOpen ? 1.0f : 0.0f;
                     if (!externalKiwiSourceProcessing(*source)
                         || source->prebuffering) {
                         // Silent while skipped: snap the gate so the source
@@ -3908,6 +3910,18 @@ void AudioEngine::setKiwiSdrAudioTransmitMuted(bool muted)
     // the legacy single-stream path keeps the historical wipe-and-reprime,
     // since nothing gates its feed during TX.
     std::lock_guard<std::recursive_mutex> dspLock(m_dspMutex);
+    if (!muted) {
+        // Unkey: sources configured for delayed resume hold their gate
+        // closed for the Kiwi chain latency so playback rejoins on audio
+        // received after the transmission ended.
+        for (const auto& source : m_externalKiwiSources) {
+            if (source && source->txResumeHoldMs > 0
+                && !source->keepAudioDuringTx) {
+                source->txResumeDeadline =
+                    QDeadlineTimer(source->txResumeHoldMs);
+            }
+        }
+    }
     m_kiwiSdrRxBuffer.clear();
     m_kiwiSdrRxPackets.clear();
     m_kiwiSdrOutputBuffer.clear();
@@ -3929,6 +3943,24 @@ void AudioEngine::setKiwiSdrAudioSourceKeepDuringTx(const QString& sourceId,
     }
 
     source->keepAudioDuringTx = keep;
+}
+
+void AudioEngine::setKiwiSdrAudioSourceResumeHold(const QString& sourceId,
+                                                  int holdMs)
+{
+    std::lock_guard<std::recursive_mutex> dspLock(m_dspMutex);
+    ExternalRxAudioSourceState* source = externalKiwiSource(sourceId, true);
+    if (!source) {
+        return;
+    }
+
+    source->txResumeHoldMs = std::max(holdMs, 0);
+    if (source->txResumeHoldMs == 0) {
+        // Hold disabled: disarm any deadline from the last unkey so the
+        // gate reopens promptly instead of waiting out a stale hold
+        // (default-constructed QDeadlineTimer is already expired).
+        source->txResumeDeadline = QDeadlineTimer();
+    }
 }
 
 void AudioEngine::setKiwiSdrAudioSourcePan(const QString& sourceId, int pan)
@@ -4113,9 +4145,12 @@ void AudioEngine::processMixedRxAudioData(const QByteArray& pcm,
     // processing still runs (to keep DSP state warm through TX) but the
     // presentation-side telemetry — RX level meter, scopes, EQ FFT tap,
     // receive-presentation post-DSP feed — must stay quiet, or the meters
-    // bounce with audio the operator cannot hear.
+    // bounce with audio the operator cannot hear. Mirrors the mix gate's
+    // closed condition exactly, including the post-unkey resume hold.
     const bool txPresentationGated = externalSource
-        && kiwiSdrAudioTransmitMuted() && !externalSource->keepAudioDuringTx;
+        && !externalSource->keepAudioDuringTx
+        && (kiwiSdrAudioTransmitMuted()
+            || !externalSource->txResumeDeadline.hasExpired());
 
     // feedAudioData() handles all remote_audio_rx paths: SSB/CW/digital on any
     // pan, and the zero-filled frames the radio sends for muted slices
