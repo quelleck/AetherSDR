@@ -719,6 +719,7 @@ set(GUI_SOURCES
     src/gui/PanadapterMessageOverlay.h
     src/gui/PanadapterRenderScheduler.cpp
     src/gui/SpectrumWidget.cpp
+    src/gui/WaterfallHistoryBuffer.cpp
     src/gui/SpectrumOverlayMenu.cpp
     src/gui/DssRenderer.cpp
     src/gui/FrequencyEntryParser.cpp
@@ -1570,6 +1571,7 @@ endif()
 
 # macOS app bundle
 if(APPLE)
+    target_sources(AetherSDR PRIVATE src/MacStartupAbortGuard.cpp)
     set_target_properties(AetherSDR PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_GUI_IDENTIFIER "com.aethersdr.AetherSDR"
@@ -1777,8 +1779,10 @@ if(AETHER_GPU_SPECTRUM)
         FILES
             resources/shaders/texturedquad.vert
             resources/shaders/texturedquad.frag
+            resources/shaders/texturedquad_rowframes.frag
             resources/shaders/overlay.vert
             resources/shaders/overlay.frag
+            resources/shaders/overlay_frequency_preview.frag
             resources/shaders/spectrum.vert
             resources/shaders/spectrum.frag
             resources/shaders/panscope.frag
@@ -1812,7 +1816,7 @@ if (USE_SYSTEM_RTMIDI)
     if(PkgConfig_FOUND)
         pkg_check_modules(rtmidi REQUIRED IMPORTED_TARGET rtmidi)
     endif()
-    target_link_libraries(aethercore PRIVATE PkgConfig::rtmidi)
+    target_link_libraries(aethercore PUBLIC PkgConfig::rtmidi)
 else()
     target_sources(aethercore PRIVATE third_party/rtmidi/RtMidi.cpp)
     # PUBLIC: MidiControlManager.h includes RtMidi.h
@@ -2652,6 +2656,21 @@ target_include_directories(dss_renderer_test PRIVATE src)
 target_link_libraries(dss_renderer_test PRIVATE Qt6::Core Qt6::Gui)
 add_test(NAME dss_renderer_test COMMAND dss_renderer_test)
 
+add_executable(spectrum_preview_logic_test
+    tests/spectrum_preview_logic_test.cpp
+)
+target_include_directories(spectrum_preview_logic_test PRIVATE src)
+target_link_libraries(spectrum_preview_logic_test PRIVATE Qt6::Core)
+add_test(NAME spectrum_preview_logic_test COMMAND spectrum_preview_logic_test)
+
+add_executable(waterfall_history_buffer_test
+    tests/waterfall_history_buffer_test.cpp
+    src/gui/WaterfallHistoryBuffer.cpp
+)
+target_include_directories(waterfall_history_buffer_test PRIVATE src)
+target_link_libraries(waterfall_history_buffer_test PRIVATE Qt6::Core)
+add_test(NAME waterfall_history_buffer_test COMMAND waterfall_history_buffer_test)
+
 add_executable(kiwi_sdr_redirect_policy_test
     tests/kiwi_sdr_redirect_policy_test.cpp
     src/core/KiwiSdrRedirectPolicy.cpp
@@ -2875,6 +2894,16 @@ add_executable(radio_status_ownership_test
 target_include_directories(radio_status_ownership_test PRIVATE src)
 target_link_libraries(radio_status_ownership_test PRIVATE Qt6::Core)
 enable_testing()
+
+if(APPLE)
+    add_executable(mac_startup_abort_guard_test
+        tests/mac_startup_abort_guard_test.cpp
+        src/MacStartupAbortGuard.cpp
+    )
+    target_include_directories(mac_startup_abort_guard_test PRIVATE src)
+    add_test(NAME mac_startup_abort_guard_test COMMAND mac_startup_abort_guard_test)
+endif()
+
 add_test(NAME radio_status_ownership_test COMMAND radio_status_ownership_test)
 
 # Approved V12 cross-needle meter construction: versioned face resource,
@@ -2939,6 +2968,9 @@ if(PYTHON3_EXECUTABLE)
     add_test(NAME aether_mcp_field_mapping
              COMMAND ${PYTHON3_EXECUTABLE}
                      ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_aether_mcp.py)
+    add_test(NAME automation_probe_field_mapping
+             COMMAND ${PYTHON3_EXECUTABLE}
+                     ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_automation_probe.py)
     # Bridge docs must stay in sync with the verb registry (#4174 Phase 3):
     # fail CI if the generated verb table drifts or a detail heading is dup'd.
     add_test(NAME bridge_docs_check
@@ -3292,6 +3324,26 @@ target_include_directories(flex_backend_lifecycle_test PRIVATE src)
 target_link_libraries(flex_backend_lifecycle_test PRIVATE aethercore Qt6::Core)
 set_target_properties(flex_backend_lifecycle_test PROPERTIES AUTOMOC ON)
 add_test(NAME flex_backend_lifecycle_test COMMAND flex_backend_lifecycle_test)
+
+# A pending client dBm request must retain a mismatching radio range for timeout
+# reconciliation and yield before a radio-authoritative band-stack restore.
+add_executable(panadapter_dbm_range_test tests/panadapter_dbm_range_test.cpp)
+target_include_directories(panadapter_dbm_range_test PRIVATE src)
+target_link_libraries(panadapter_dbm_range_test PRIVATE aethercore Qt6::Core)
+set_target_properties(panadapter_dbm_range_test PROPERTIES AUTOMOC ON)
+add_test(NAME panadapter_dbm_range_test COMMAND panadapter_dbm_range_test)
+
+# The bridge preserves dragAt, target-tune, memory-recall, and authenticated
+# positional requests across its bare and JSON protocol forms.
+add_executable(automation_drag_at_test tests/automation_drag_at_test.cpp)
+target_include_directories(automation_drag_at_test PRIVATE src)
+target_link_libraries(automation_drag_at_test PRIVATE
+    aethercore Qt6::Core Qt6::Network Qt6::Widgets
+)
+set_target_properties(automation_drag_at_test PROPERTIES AUTOMOC ON)
+add_test(NAME automation_drag_at_test COMMAND automation_drag_at_test)
+set_tests_properties(automation_drag_at_test PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 # aetherd RFC 2.3 template — pan decode/normalize chain (incl. wnb_level guard).
 add_executable(aetherd_pan_decode_test tests/aetherd_pan_decode_test.cpp)
@@ -3742,6 +3794,11 @@ else()
         install(FILES third_party/smartsdr-dsp/config/AetherDV.cfg
             DESTINATION ${CMAKE_INSTALL_BINDIR}
         )
+        if(LINUX)
+            install(FILES packaging/linux/70-aethersdr-thumbdv.rules
+                DESTINATION lib/udev/rules.d
+            )
+        endif()
     endif()
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/packaging/linux/AetherSDR.desktop
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications
@@ -3758,9 +3815,4 @@ else()
     install(FILES packaging/linux/aethersdr.1
         DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
     )
-    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        install(FILES packaging/linux/70-aethersdr-thumbdv.rules
-            DESTINATION lib/udev/rules.d
-        )
-    endif()
 endif()

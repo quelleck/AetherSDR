@@ -23,6 +23,7 @@
 #include "DisplayStatusGate.h"       // #4261 adaptive-throttle echo gate
 #include "Ax25HfPacketDecodeDialog.h"
 #include "AppletPanel.h"
+#include "DbmRangeTransition.h"
 #include "MainWindowHelpers.h"
 #include "PanadapterApplet.h"
 #include "PanadapterStack.h"
@@ -468,32 +469,45 @@ bool MainWindow::snapCenterLockForSlice(SliceModel* slice, double mhz, bool send
     if (sw && sw->panDragActive()) {
         return false;
     }
+    // Effective (pending-else-model) geometry: during the profile-load hold
+    // the model deliberately lags a deferred request, and comparing against it
+    // would re-issue the same write on every echo (#4142).
+    const double effPanBandwidthMhz = m_radioModel.effectivePanBandwidthMhz(panId);
     const double bandwidthMhz = kiwiDisplayActive && sw && sw->bandwidthMhz() > 0.0
         ? sw->bandwidthMhz()
-        : (pan->bandwidthMhz() > 0.0
-            ? pan->bandwidthMhz()
+        : (effPanBandwidthMhz > 0.0
+            ? effPanBandwidthMhz
             : (sw ? sw->bandwidthMhz() : 0.0));
     const double targetCenterMhz =
         bandwidthMhz > 0.0 ? std::max(mhz, bandwidthMhz / 2.0) : mhz;
     bool changed = false;
 
-    if (sw && bandwidthMhz > 0.0
+    const bool modelNeedsCenter =
+        !qFuzzyCompare(m_radioModel.effectivePanCenterMhz(panId), targetCenterMhz);
+    bool centerDeferred = false;
+
+    if (!kiwiDisplayActive && modelNeedsCenter) {
+        if (sendCommand) {
+            // #4142 — defer, never drop. requestPanCenter() advances the local
+            // model only when the command actually reaches the wire, and queues
+            // it for replay when a profile load is holding radio-state writes.
+            centerDeferred = !m_radioModel.requestPanCenter(panId, targetCenterMhz);
+        } else {
+            // Local-only snap: the caller explicitly wants no radio write, so
+            // there is no wire command for the model to diverge from.
+            pan->setCenterBandwidth(targetCenterMhz, -1.0);  // aetherd RFC 2.3
+        }
+        changed = !centerDeferred;
+    }
+
+    // Never move the visible span while the radio stays put. A view that claims
+    // a center the radio never took is precisely what projects honest tiles into
+    // a lying frame and bakes black rows into waterfall history (#4142).
+    if (!centerDeferred && sw && bandwidthMhz > 0.0
         && (!qFuzzyCompare(sw->centerMhz(), targetCenterMhz)
             || !qFuzzyCompare(sw->bandwidthMhz(), bandwidthMhz))) {
         sw->setFrequencyRangeImmediate(targetCenterMhz, bandwidthMhz);
         changed = true;
-    }
-
-    const bool modelNeedsCenter = !qFuzzyCompare(pan->centerMhz(), targetCenterMhz);
-    if (!kiwiDisplayActive && modelNeedsCenter) {
-        pan->setCenterBandwidth(targetCenterMhz, -1.0);  // aetherd RFC 2.3
-        changed = true;
-    }
-
-    if (sendCommand && !kiwiDisplayActive && modelNeedsCenter) {
-        m_radioModel.sendCommand(
-            QStringLiteral("display pan set %1 center=%2")
-                .arg(panId, QString::number(targetCenterMhz, 'f', 6)));
     }
 
     return changed;
@@ -2307,6 +2321,16 @@ void MainWindow::scheduleProfileLoadRecovery(const QString& profileType,
     });
     QTimer::singleShot(kProfileLoadDeferredPanFlushDelayMs, this, [this]() {
         flushPendingProfileLoadPanDimensions();
+        // Deferred pan WRITES (center/bandwidth/band) are NOT flushed from
+        // here. RadioModel owns that replay — hold-relative, armed by the act
+        // of deferring — because this entire recovery pass is gated on the
+        // profile-load ACK, and a large topology (8 pans / 8 slices, measured
+        // 5/5 on a 6700) can stall the radio into a force-disconnect before
+        // the ACK ever arrives; a flush scheduled here would never run. A
+        // dimensions-then-centers ordering is NOT required for correctness:
+        // every VITA-49 tile carries its own FrameLowFreq/BinBandwidth, so a
+        // recenter that lands before the pixel geometry settles is a
+        // self-correcting transient, not a scar. (#4142)
     });
     QTimer::singleShot(kProfileLoadPostHoldRecoveryDelayMs, this, [this]() {
         m_profileLoadPendingFftYpixels.clear();
@@ -2521,23 +2545,69 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
         sw->suspendNoiseFloorAutoAdjustUntil(m_profileLoadRadioStateWriteHoldUntilMs);
     }
 
-    struct PendingDbmRange {
-        bool active{false};
-        float minDbm{0.0f};
-        float maxDbm{0.0f};
-        qint64 requestedMs{0};
-    };
-    auto pendingDbm = std::make_shared<PendingDbmRange>();
-    auto dbmMatches = [](float leftMin, float leftMax, float rightMin, float rightMax) {
-        return std::abs(leftMin - rightMin) < 0.01f
-            && std::abs(leftMax - rightMax) < 0.01f;
-    };
+    auto pendingDbm = std::make_shared<DbmRangeTransition::Handshake>();
     auto setStreamDbmRange = [this, applet](float minDbm, float maxDbm, bool waitForEcho = false) {
         if (auto* pan = m_radioModel.panadapter(applet->panId())) {
             if (pan->panStreamId()) {
                 m_radioModel.panStream()->setDbmRange(pan->panStreamId(), minDbm, maxDbm, waitForEcho);
             }
         }
+    };
+    auto applyAuthoritativeDbmRange = [this, applet, sw, setStreamDbmRange]
+                                      (const DbmRangeTransition::Range& range) {
+        sw->cancelPendingDbmRangeChange();
+        if (auto* pan = m_radioModel.panadapter(applet->panId())) {
+            if (pan->panStreamId()) {
+                m_radioModel.panStream()->cancelPendingDbmRange(pan->panStreamId());
+            }
+        }
+        setStreamDbmRange(range.minDbm, range.maxDbm);
+        sw->setDbmRange(range.minDbm, range.maxDbm);
+        sw->prepareForFftScaleChange();
+        sw->reacquireNoiseFloorLock();
+    };
+    auto reconcileDbmRangeFromModel = [this, applet, pendingDbm,
+                                       applyAuthoritativeDbmRange]() {
+        if (auto* pan = m_radioModel.panadapter(applet->panId())) {
+            const DbmRangeTransition::HandshakeDecision decision =
+                pendingDbm->cancelForRadioAuthority(pan->minDbm(), pan->maxDbm());
+            if (decision.action == DbmRangeTransition::HandshakeAction::ReconcileRadioRange) {
+                applyAuthoritativeDbmRange(decision.range);
+            }
+        }
+    };
+    auto retireDbmRangeWithoutEcho = [this, applet, sw]() {
+        // Some Flex firmware accepts a display range command without echoing
+        // min_dbm/max_dbm. In that case the decoder is already using the range
+        // the radio adopted, so only retire the stale-echo guard; reverting to
+        // PanadapterModel here would restore the pre-command range and corrupt
+        // every subsequent FFT bin until another status happened to arrive.
+        sw->cancelPendingDbmRangeChange();
+        if (auto* pan = m_radioModel.panadapter(applet->panId())) {
+            if (pan->panStreamId()) {
+                m_radioModel.panStream()->cancelPendingDbmRange(pan->panStreamId());
+            }
+        }
+    };
+    auto finishDbmRangeHandshake = [pendingDbm, applyAuthoritativeDbmRange,
+                                    retireDbmRangeWithoutEcho](quint64 generation) {
+        const DbmRangeTransition::HandshakeDecision decision =
+            pendingDbm->finish(generation);
+        if (decision.action == DbmRangeTransition::HandshakeAction::ReconcileRadioRange) {
+            applyAuthoritativeDbmRange(decision.range);
+        } else if (decision.action
+                   == DbmRangeTransition::HandshakeAction::RetireWithoutEcho) {
+            retireDbmRangeWithoutEcho();
+        }
+    };
+    auto armDbmRangeHandshake = [sw, pendingDbm, finishDbmRangeHandshake]
+                                (float minDbm, float maxDbm) {
+        const quint64 generation = pendingDbm->arm(
+            minDbm, maxDbm, QDateTime::currentMSecsSinceEpoch());
+        QTimer::singleShot(kDbmRangeHandshakeTimeoutMs, sw,
+            [pendingDbm, finishDbmRangeHandshake, generation]() {
+                finishDbmRangeHandshake(generation);
+            });
     };
     auto sendDbmRangeCommand = [this, applet](float minDbm, float maxDbm) {
         if (!dbmRangeLooksPlausible(minDbm, maxDbm)) {
@@ -2568,6 +2638,14 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
     sw->disconnect(this);
     menu->disconnect(this);
     applet->disconnect(this);
+    QObject::disconnect(this, &MainWindow::bandStackRestoreStarting, sw, nullptr);
+    connect(this, &MainWindow::bandStackRestoreStarting,
+            sw, [applet, pendingDbm, reconcileDbmRangeFromModel]
+                (const QString& panId) {
+        if (applet->panId() == panId && pendingDbm->active()) {
+            reconcileDbmRangeFromModel();
+        }
+    });
     if (m_appletPanel && m_appletPanel->rxApplet()) {
         QObject::disconnect(m_appletPanel->rxApplet(), nullptr, sw, nullptr);
     }
@@ -2743,22 +2821,22 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
         //   b) in multi-pan setups, a level update on pan B doesn't incorrectly
         //      update pan A's dBm scale.
         connect(pan, &PanadapterModel::levelChanged,
-                sw, [sw, pendingDbm, dbmMatches, setStreamDbmRange](float minDbm, float maxDbm) {
-            if (pendingDbm->active) {
-                if (!dbmMatches(minDbm, maxDbm, pendingDbm->minDbm, pendingDbm->maxDbm)) {
-                    const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
-                    if (pendingDbm->requestedMs > 0
-                        && nowMs - pendingDbm->requestedMs > kDbmRangeHandshakeTimeoutMs) {
-                        pendingDbm->active = false;
-                        pendingDbm->requestedMs = 0;
-                    } else {
-                        setStreamDbmRange(pendingDbm->minDbm, pendingDbm->maxDbm, true);
-                        return;
-                    }
-                } else {
-                    pendingDbm->active = false;
-                    pendingDbm->requestedMs = 0;
-                }
+                sw, [sw, pendingDbm, setStreamDbmRange,
+                     applyAuthoritativeDbmRange](float minDbm, float maxDbm) {
+            const DbmRangeTransition::HandshakeDecision decision =
+                pendingDbm->observeRadioRange(
+                    minDbm, maxDbm, QDateTime::currentMSecsSinceEpoch(),
+                    kDbmRangeHandshakeTimeoutMs);
+            if (decision.action
+                == DbmRangeTransition::HandshakeAction::HoldRequestedRange) {
+                setStreamDbmRange(
+                    decision.range.minDbm, decision.range.maxDbm, true);
+                return;
+            }
+            if (decision.action
+                == DbmRangeTransition::HandshakeAction::ReconcileRadioRange) {
+                applyAuthoritativeDbmRange(decision.range);
+                return;
             }
             if (sw->isDraggingDbmScale()) {
                 return;
@@ -2836,23 +2914,30 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
         if (kiwiSdrPanDisplaysKiwi(applet->panId())) {
             return;
         }
-        m_radioModel.sendCommand(
-            QString("display pan set %1 bandwidth=%2").arg(applet->panId()).arg(bw, 0, 'f', 6));
+        // #4142: a bandwidth drag is user intent — during the profile-load
+        // hold a bare sendCommand() is silently destroyed; defer it instead.
+        m_radioModel.requestPanBandwidth(applet->panId(), bw);
     });
     connect(sw, &SpectrumWidget::centerChangeRequested,
             this, [this, applet](double center) {
         if (kiwiSdrPanDisplaysKiwi(applet->panId())) {
             return;
         }
-        if (auto* pan = m_radioModel.panadapter(applet->panId())) {
-            center = std::max(center, pan->bandwidthMhz() / 2.0);
-            // The radio may acknowledge this command without echoing a display
-            // status to the setting client. Keep the canonical model aligned
-            // with the visible pan so TCI dds: follows the IQ center.
-            pan->setCenterBandwidth(center, -1.0);
+        // Clamp against EFFECTIVE bandwidth (a deferred zoom's pending value,
+        // else the model): during the hold the model deliberately lags the
+        // user's deferred request. Dispatch re-clamps against live geometry
+        // regardless — this caller clamp is UX-only.
+        const double effBw =
+            m_radioModel.effectivePanBandwidthMhz(applet->panId());
+        if (effBw > 0.0) {
+            center = std::max(center, effBw / 2.0);
         }
-        m_radioModel.sendCommand(
-            QString("display pan set %1 center=%2").arg(applet->panId()).arg(center, 0, 'f', 6));
+        // The radio may acknowledge this command without echoing a display status
+        // to the setting client, so requestPanCenter() keeps the canonical model
+        // aligned with the wire command (TCI dds: follows this center) — and
+        // during a profile load it defers rather than letting sendCmd drop it
+        // silently (#4142).
+        m_radioModel.requestPanCenter(applet->panId(), center);
     });
     // Band/Segment Zoom toggle off the pan's radio-authoritative model state
     // (togglePanZoomModeForPan) — shared with the keyboard/MIDI shortcuts
@@ -2873,7 +2958,8 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
     });
 
     connect(sw, &SpectrumWidget::dbmRangeChangeRequested,
-            this, [this, applet, sw, pendingDbm, setStreamDbmRange, sendDbmRangeCommand]
+            this, [this, applet, sw, armDbmRangeHandshake,
+                   setStreamDbmRange, sendDbmRangeCommand]
                   (float minDbm, float maxDbm) {
         if (sw->kiwiSdrWaterfallActive()) {
             sw->setDbmRange(minDbm, maxDbm);
@@ -2916,15 +3002,13 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
             return;
         }
 
-        pendingDbm->active = true;
-        pendingDbm->minDbm = minDbm;
-        pendingDbm->maxDbm = maxDbm;
-        pendingDbm->requestedMs = QDateTime::currentMSecsSinceEpoch();
+        armDbmRangeHandshake(minDbm, maxDbm);
         setStreamDbmRange(minDbm, maxDbm, true);
         sendDbmRangeCommand(minDbm, maxDbm);
     });
     connect(sw, &SpectrumWidget::dbmRangeDragFinished,
-            this, [this, applet, sw, pendingDbm, setStreamDbmRange, sendDbmRangeCommand](float minDbm, float maxDbm) {
+            this, [this, applet, sw, armDbmRangeHandshake,
+                   setStreamDbmRange, sendDbmRangeCommand](float minDbm, float maxDbm) {
         if (sw->kiwiSdrWaterfallActive()) {
             sw->setDbmRange(minDbm, maxDbm);
             sw->prepareForFftScaleChange();
@@ -2938,10 +3022,7 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
             return;
         }
 
-        pendingDbm->active = true;
-        pendingDbm->minDbm = minDbm;
-        pendingDbm->maxDbm = maxDbm;
-        pendingDbm->requestedMs = QDateTime::currentMSecsSinceEpoch();
+        armDbmRangeHandshake(minDbm, maxDbm);
         setStreamDbmRange(minDbm, maxDbm, true);
         sendDbmRangeCommand(minDbm, maxDbm);
     });
@@ -3645,13 +3726,20 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
             return;
         }
         if (auto* pan = m_radioModel.panadapter(target->panId())) {
-            centerMhz = std::max(centerMhz, pan->bandwidthMhz() / 2.0);
+            // Effective (pending-else-model) geometry, so a deferred write in
+            // flight dedupes instead of re-issuing per drag tick (#4142).
+            centerMhz = std::max(
+                centerMhz,
+                m_radioModel.effectivePanBandwidthMhz(pan->panId()) / 2.0);
             // In-window drag moves pass the unchanged center purely to tune
             // without reveal — only emit the pan command when it actually moves.
-            if (!qFuzzyCompare(centerMhz, pan->centerMhz())) {
-                m_radioModel.sendCommand(
-                    QString("display pan set %1 center=%2")
-                        .arg(pan->panId()).arg(centerMhz, 0, 'f', 6));
+            if (!qFuzzyCompare(centerMhz,
+                               m_radioModel.effectivePanCenterMhz(pan->panId()))) {
+                // Deferred rather than dropped during a profile load (#4142).
+                // The SpectrumWidget owns its own view during an edge-pan drag,
+                // so the gesture still tracks the cursor; the radio catches up
+                // when the deferred center flushes.
+                m_radioModel.requestPanCenter(pan->panId(), centerMhz);
             }
         }
         queueActiveSliceForSpectrumTarget(target->sliceId());
@@ -3825,15 +3913,34 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
             }
         }
 
-        // Forward to DX cluster if requested
-        if (forwardToCluster && m_dxCluster && m_dxCluster->isConnected()) {
-            QString dxCmd = QString("DX %1 %2 %3")
-                .arg(freqMhz * 1000.0, 0, 'f', 1)
-                .arg(callsign)
-                .arg(comment);
-            QMetaObject::invokeMethod(m_dxCluster, [this, dxCmd] {
-                m_dxCluster->sendCommand(dxCmd);
-            });
+        // Forward to DX cluster if requested. Every failure mode here used to
+        // be silent, so the operator saw the local "Manual" spot appear but had
+        // no way to tell whether the forward reached the cluster — the report
+        // behind #2857. Give explicit status-bar feedback on each outcome.
+        if (forwardToCluster) {
+            if (!m_dxCluster || !m_dxCluster->isConnected()) {
+                // Most common cause in the field: only the RBN tab (read-only)
+                // is connected, or the DX Cluster tab dropped. Say so instead
+                // of no-op'ing.
+                statusBar()->showMessage(
+                    "DX Cluster not connected — spot not forwarded", 5000);
+            } else {
+                // DX Spider silently drops a `DX <freq> <call>` line with an
+                // empty remark, which looks identical to "the forward did
+                // nothing". Substitute a non-empty default so the spot is
+                // accepted; the operator's own comment passes through unchanged.
+                const QString remark = comment.isEmpty()
+                    ? QStringLiteral("Spotted via AetherSDR") : comment;
+                QString dxCmd = QString("DX %1 %2 %3")
+                    .arg(freqMhz * 1000.0, 0, 'f', 1)
+                    .arg(callsign)
+                    .arg(remark);
+                QMetaObject::invokeMethod(m_dxCluster, [this, dxCmd] {
+                    m_dxCluster->sendCommand(dxCmd);
+                });
+                statusBar()->showMessage(
+                    QString("Spot forwarded to DX Cluster: %1").arg(callsign), 5000);
+            }
         }
     });
     connect(sw, &SpectrumWidget::spotRemoveRequested, this, [this](int spotIndex) {
@@ -3914,8 +4021,9 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
 
     // ── Band selection ───────────────────────────────────────────────────
     connect(menu, &SpectrumOverlayMenu::bandSelected,
-            this, [this, applet](const QString& bandName, double freqMhz, const QString& mode,
-                                 const QString& stackKeyHint) {
+            this, [this, applet]
+                  (const QString& bandName, double freqMhz, const QString& mode,
+                   const QString& stackKeyHint) {
         qDebug() << "MainWindow: switching to band" << bandName
                  << "freq:" << freqMhz << "mode:" << mode;
 
@@ -4008,6 +4116,11 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
                 << " freq_hint_mhz=" << QString::number(freqMhz, 'f', 6)
                 << " mode_hint=" << mode
                 << " xvtr=" << xvtrForBandSummary(bandName, xvtrs);
+            // A band stack restore is radio-authoritative and may carry a dBm
+            // range different from a just-released scale drag. Abandon that
+            // client request before the band command so the restored range
+            // cannot be rejected as a stale echo and wedge FFT decoding.
+            emit bandStackRestoreStarting(applet->panId());
             clearSwrSweepForBandChange(-1, applet->panId(), bandName);
             m_bandSettings.setCurrentBand(bandName);
             // A band recall makes the radio drop+re-create this pan's slice;
@@ -4020,8 +4133,11 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
                                [this, panId = applet->panId()]() {
                 m_kiwiRebind.clearBandRecall(panId);
             });
-            m_radioModel.sendCommand(
-                QString("display pan set %1 band=%2").arg(applet->panId()).arg(stackKey));
+            // #4142: during the profile-load hold a bare sendCommand() band=
+            // write is silently destroyed. requestPanBand defers it instead.
+            // Outside a hold it dispatches inline, so the #4158 grace window
+            // above is unchanged on the normal user-initiated band-recall path.
+            m_radioModel.requestPanBand(applet->panId(), stackKey);
             QTimer::singleShot(300, this, [this, panId = applet->panId()]() {
                 reassertUnmutedSliceAudioForPan(panId);
             });
@@ -4134,10 +4250,12 @@ MainWindow::TuneCenteringResult MainWindow::revealFrequencyIfNeeded(
             ? kPanFollowAnimationDurationMs
             : 0;
 
-        pan->setCenterBandwidth(result.newCenterMhz, -1.0);  // aetherd RFC 2.3
-        m_radioModel.sendCommand(
-            QString("display pan set %1 center=%2")
-                .arg(pan->panId()).arg(result.newCenterMhz, 0, 'f', 6));
+        // #4142 — defer, never drop. During a profile load the pan center write
+        // is suppressed at the wire; advancing the local center anyway is what
+        // made the waterfall go black (the view claimed a center the radio never
+        // took). requestPanCenter() applies the model update only when the
+        // command actually goes out, and replays it once the hold lifts.
+        m_radioModel.requestPanCenter(pan->panId(), result.newCenterMhz);
         return result;
     }
 
@@ -4221,13 +4339,13 @@ MainWindow::TuneCenteringResult MainWindow::revealFrequencyIfNeeded(
         ? kPanFollowAnimationDurationMs
         : 0;
 
-    // Apply the center optimistically so the owning spectrum repaints
-    // immediately; SpectrumWidget decides whether that becomes a short
-    // retargetable animation or an immediate snap based on shift size.
-    pan->setCenterBandwidth(result.newCenterMhz, -1.0);  // aetherd RFC 2.3
-    m_radioModel.sendCommand(
-        QString("display pan set %1 center=%2")
-            .arg(pan->panId()).arg(result.newCenterMhz, 0, 'f', 6));
+    // Apply the center so the owning spectrum repaints immediately;
+    // SpectrumWidget decides whether that becomes a short retargetable animation
+    // or an immediate snap based on shift size. During a profile load this
+    // defers instead (#4142) — the model does not advance ahead of the radio, so
+    // the pan keeps showing truthful spectrum for its real span until the
+    // deferred center flushes.
+    m_radioModel.requestPanCenter(pan->panId(), result.newCenterMhz);
     return result;
 }
 

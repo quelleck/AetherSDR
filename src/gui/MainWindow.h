@@ -213,6 +213,9 @@ public:
     QJsonObject automationSetCenterLock(int sliceId, bool enabled);
     QJsonObject automationSetSliceLink(int aId, int bId, bool on);  // MainWindow_Wiring.cpp
     QJsonObject automationTune(double mhz, int sliceId = -1);
+    QJsonObject automationTargetTune(double mhz);
+    QJsonObject automationActivateMemory(int memoryIndex,
+                                         const QString& preferredPanId);
     QJsonObject automationReceiveSyncSnapshot() const;
     QJsonObject automationKiwiSdrSnapshot() const;
     // Status-bar TX-timer state for the bridge `get txtimer` verb.
@@ -237,6 +240,12 @@ public:
     // Persist the observe-only opt-in and push it live (Radio Setup → Network).
     // When set, the bridge refuses every mutating verb (#4188 area 6).
     void setAutomationReadOnly(bool readOnly);
+
+signals:
+    // Synchronous per-pan preflight for every radio-authoritative band-stack
+    // restore. wirePanadapter() owns the pending dBm handshake state, while the
+    // restore can originate in several MainWindow translation units.
+    void bandStackRestoreStarting(const QString& panId);
 
 protected:
     void showEvent(QShowEvent* event) override;
