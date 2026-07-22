@@ -5874,20 +5874,57 @@ void SpectrumWidget::setCenterLockSliceId(int sliceId)
         return;
     }
     m_centerLockSliceId = sliceId;
-    QString sliceName = QString::number(sliceId);
-    const int overlay = overlayIndex(sliceId);
-    if (overlay >= 0) {
-        sliceName = SliceLabel::unicodeForm(
-            m_sliceOverlays.at(overlay).sliceId,
-            m_sliceOverlays.at(overlay).perClientLetter);
-    }
-    setAccessibleDescription(
-        sliceId >= 0
-            ? tr("Center Lock enabled for Slice %1").arg(sliceName)
-            : tr("Center Lock is off"));
+    updateAccessibleStateDescription();
     QAccessibleValueChangeEvent event(this, sliceId);
     QAccessible::updateAccessibility(&event);
     markOverlayDirty();
+}
+
+void SpectrumWidget::setSliceLinkPair(int aSliceId, int bSliceId, bool suspended)
+{
+    if (m_sliceLinkA == aSliceId && m_sliceLinkB == bSliceId
+        && m_sliceLinkSuspended == suspended) {
+        return;
+    }
+    m_sliceLinkA = aSliceId;
+    m_sliceLinkB = bSliceId;
+    m_sliceLinkSuspended = suspended;
+    updateAccessibleStateDescription();
+    QAccessibleEvent event(this, QAccessible::DescriptionChanged);
+    QAccessible::updateAccessibility(&event);
+    markOverlayDirty();
+}
+
+// Center Lock and Slice Link share the widget-level accessible description,
+// so it is composed from both states — neither setter may overwrite the
+// other's announcement (screen readers hold only one description per widget).
+void SpectrumWidget::updateAccessibleStateDescription()
+{
+    QStringList parts;
+    if (m_centerLockSliceId >= 0) {
+        QString sliceName = QString::number(m_centerLockSliceId);
+        const int overlay = overlayIndex(m_centerLockSliceId);
+        if (overlay >= 0) {
+            sliceName = SliceLabel::unicodeForm(
+                m_sliceOverlays.at(overlay).sliceId,
+                m_sliceOverlays.at(overlay).perClientLetter);
+        }
+        parts << tr("Center Lock enabled for Slice %1").arg(sliceName);
+    } else {
+        parts << tr("Center Lock is off");
+    }
+    if (m_sliceLinkA >= 0) {
+        parts << (m_sliceLinkSuspended
+                      ? tr("Slice Link suspended (a member is VFO-locked)")
+                      : tr("Slice Link active"));
+    }
+    setAccessibleDescription(parts.join(QStringLiteral("; ")));
+}
+
+void SpectrumWidget::setSliceLinkCandidates(
+    const QVector<SliceLinkCandidate>& candidates)
+{
+    m_sliceLinkCandidates = candidates;
 }
 
 void SpectrumWidget::setSliceOverlayFreq(int sliceId, double freqMhz)
@@ -7303,6 +7340,77 @@ void SpectrumWidget::mousePressEvent(QMouseEvent* ev)
                 addCenterLockAction(centerLockMenu, so, false);
             }
         };
+        // Slice Link (cross-panadapter VFO link). Candidates are pushed by
+        // MainWindow already filtered for eligibility (owned, non-diversity),
+        // because the peer may live on another pan this widget can't see.
+        auto addSliceLinkControls = [this](QMenu& targetMenu) {
+            if (m_sliceLinkCandidates.size() < 2) {
+                return;
+            }
+            const auto candidateFor = [this](int sliceId) -> const SliceLinkCandidate* {
+                for (const SliceLinkCandidate& c : m_sliceLinkCandidates) {
+                    if (c.sliceId == sliceId) {
+                        return &c;
+                    }
+                }
+                return nullptr;
+            };
+            const auto pairLinked = [this](int aId, int bId) {
+                return (m_sliceLinkA == aId && m_sliceLinkB == bId)
+                    || (m_sliceLinkA == bId && m_sliceLinkB == aId);
+            };
+            const auto addToggle = [this, pairLinked](
+                                       QMenu* menu, const QString& text,
+                                       int aId, int bId) {
+                QAction* action = menu->addAction(text);
+                action->setCheckable(true);
+                const bool linked = pairLinked(aId, bId);
+                action->setChecked(linked);
+                connect(action, &QAction::triggered, this,
+                        [this, aId, bId, linked]() {
+                    emit sliceLinkRequested(aId, bId, !linked);
+                });
+            };
+
+            if (m_sliceLinkCandidates.size() == 2) {
+                const SliceLinkCandidate& c0 = m_sliceLinkCandidates.at(0);
+                const SliceLinkCandidate& c1 = m_sliceLinkCandidates.at(1);
+                targetMenu.addSeparator();
+                addToggle(&targetMenu,
+                          QStringLiteral("Link Slice %1 ⇄ Slice %2")
+                              .arg(c0.display, c1.display),
+                          c0.sliceId, c1.sliceId);
+                return;
+            }
+
+            // More than two linkable slices: anchor on this pan's active (or
+            // first) eligible overlay and offer the others as peer choices.
+            const SliceLinkCandidate* anchor = nullptr;
+            const SliceOverlay* active = activeOverlay();
+            if (active) {
+                anchor = candidateFor(active->sliceId);
+            }
+            if (!anchor) {
+                for (const SliceOverlay& so : m_sliceOverlays) {
+                    if ((anchor = candidateFor(so.sliceId))) {
+                        break;
+                    }
+                }
+            }
+            if (!anchor) {
+                return;
+            }
+            targetMenu.addSeparator();
+            QMenu* linkMenu = targetMenu.addMenu(
+                QStringLiteral("Link Slice %1 ⇄").arg(anchor->display));
+            for (const SliceLinkCandidate& c : m_sliceLinkCandidates) {
+                if (c.sliceId == anchor->sliceId) {
+                    continue;
+                }
+                addToggle(linkMenu, QStringLiteral("Slice %1").arg(c.display),
+                          anchor->sliceId, c.sliceId);
+            }
+        };
 
         // Right-click on off-screen slice indicator → slice context menu
         for (int oi = 0; oi < m_offScreenRects.size(); ++oi) {
@@ -7452,6 +7560,7 @@ void SpectrumWidget::mousePressEvent(QMouseEvent* ev)
 
         if (hitTnf < 0) {
             addCenterLockControls(menu);
+            addSliceLinkControls(menu);
 
             // Close Slice option (only when multiple slices exist)
             if (m_sliceOverlays.size() > 1) {
@@ -12546,6 +12655,21 @@ void SpectrumWidget::drawSliceMarkers(QPainter& p, const QRect& specRect, const 
                        targetCenter.x() + 9, targetCenter.y());
             p.drawLine(targetCenter.x(), targetCenter.y() - 9,
                        targetCenter.x(), targetCenter.y() + 9);
+        }
+
+        // Slice Link member marker: ⇄ beside the VFO line on both linked
+        // slices (dim gray while propagation is suspended by a VFO lock).
+        // Passive affordance like the Center Lock target above — the control
+        // lives in the right-click menu, not on the pan chrome.
+        if (so.sliceId == m_sliceLinkA || so.sliceId == m_sliceLinkB) {
+            QFont linkFont = p.font();
+            linkFont.setPixelSize(12);
+            linkFont.setBold(true);
+            p.setFont(linkFont);
+            p.setPen(m_sliceLinkSuspended
+                         ? QColor(0x80, 0x80, 0x80, 220)
+                         : QColor(col.red(), col.green(), col.blue(), 220));
+            p.drawText(vfoX + 12, specRect.top() + 24, QStringLiteral("⇄"));
         }
 
         // ── Filter passband shading ──────────────────────────────────────
