@@ -3067,6 +3067,8 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
             sw, &SpectrumWidget::setFftFillAlpha);
     connect(menu, &SpectrumOverlayMenu::fftFillColorChanged,
             sw, &SpectrumWidget::setFftFillColor);
+    connect(menu, &SpectrumOverlayMenu::fftLineColorChanged,
+            sw, &SpectrumWidget::setFftLineColor);
     connect(menu, &SpectrumOverlayMenu::fftHeatMapChanged,
             sw, &SpectrumWidget::setFftHeatMap);
     connect(menu, &SpectrumOverlayMenu::showGridChanged,
@@ -3474,6 +3476,7 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
         sw->setFftFps(25);
         sw->setFftFillAlpha(0.70f);
         sw->setFftFillColor(QColor(0x00, 0xe5, 0xff));
+        sw->setFftLineColor(QColor(0x00, 0xe5, 0xff));
         sw->setFftLineWidth(2.0f);
         sw->setFftWeightedAvg(false);
         sw->setFftHeatMap(true);
@@ -3523,6 +3526,7 @@ void MainWindow::wirePanadapter(PanadapterApplet* applet)
         auto& s = AppSettings::instance();
         s.setValue(sw->settingsKey("DisplayFftFillAlpha"),        "0.70");
         s.setValue(sw->settingsKey("DisplayFftFillColor"),        "#00e5ff");
+        s.setValue(sw->settingsKey("DisplayFftLineColor"),        "#00e5ff");
         s.setValue(sw->settingsKey("DisplayFftLineWidth"),        "2.0");
         s.setValue(sw->settingsKey("DisplayFftHeatMap"),          "True");
         s.setValue(sw->settingsKey("DisplayWfColorScheme"),       "0");
