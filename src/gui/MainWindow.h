@@ -129,6 +129,9 @@ class CallsignLookupDialog;
 class Ax25HfPacketDecodeDialog;
 class PskReporterMapDialog;
 class GpsLocationDialog;
+#ifdef AETHER_ASR_ENABLED
+class CopyAssistController;
+#endif
 class FlexControlDialog;
 class MidiMappingDialog;
 #ifdef HAVE_HIDAPI
@@ -621,6 +624,9 @@ private:
     void showNetworkDiagnosticsDialog();
     void showAgcCalibrationDialog(int sliceId);
     void showAx25HfPacketDecodeDialog();
+#ifdef AETHER_ASR_ENABLED
+    void showCopyAssist();
+#endif
     void scheduleDigitalVoiceAutoStart();
     void stopDigitalVoiceService(bool waitForExit);
     void showPskReporterMapDialog();
@@ -1032,6 +1038,11 @@ private:
     NetReminderBanner* m_netReminderBanner{nullptr};
     QSystemTrayIcon* m_trayIcon{nullptr};
     QPointer<Ax25HfPacketDecodeDialog> m_ax25HfPacketDecodeDialog;
+#ifdef AETHER_ASR_ENABLED
+    QPointer<CopyAssistController> m_copyAssistController;
+    QPointer<PanadapterApplet> m_copyAssistApplet;
+    QMetaObject::Connection m_copyAssistFreqConn; // active-slice retune → clear decode
+#endif
     QPointer<PskReporterMapDialog> m_pskReporterMapDialog;
     QPointer<GpsLocationDialog> m_gpsLocationDialog;
     QPointer<FlexControlDialog> m_flexControlDialog;
@@ -1078,6 +1089,9 @@ private:
     QLabel* m_addPanLabel{nullptr};
     QLabel* m_tnfIndicator{nullptr};
     QLabel* m_cwxIndicator{nullptr};
+#ifdef AETHER_ASR_ENABLED
+    QLabel* m_asrIndicator{nullptr};  // status-bar ASR (Copy Assist) toggle
+#endif
     CwxPanel* m_cwxPanel{nullptr};
     DvkPanel* m_dvkPanel{nullptr};
     QLabel* m_dvkIndicator{nullptr};
