@@ -690,6 +690,10 @@ void MainWindow::engageSliceLink(int aId, int bId)
                        [this, s](double mhz) {
                            onSliceLinkFrequencyChanged(s, mhz);
                        })
+            << connect(s, &SliceModel::frequencyCommandIssued, this,
+                       [this, s](double mhz) {
+                           onSliceLinkFrequencyCommandIssued(s, mhz);
+                       })
             << connect(s, &SliceModel::lockedChanged, this,
                        [this, s](bool locked) {
                            onSliceLinkLockedChanged(s, locked);
@@ -796,6 +800,27 @@ void MainWindow::onSliceLinkFrequencyChanged(SliceModel* s, double mhz)
         break;
     case SliceLinkPolicy::Action::IgnoreSweep:
         break;
+    }
+}
+
+void MainWindow::onSliceLinkFrequencyCommandIssued(SliceModel* s, double mhz)
+{
+    // frequencyChanged is emitted before this command-provenance signal, so a
+    // genuine local move has already propagated to the peer. Arm the origin's
+    // ring now to absorb its later radio confirmation (including stale values
+    // from a fast spin) without replaying them backwards onto the peer.
+    if (m_applyingSliceLink || !m_sliceLink.active() || !s) {
+        return;
+    }
+    const int id = s->sliceId();
+    SliceLinkPolicy::PendingWrites* ring = nullptr;
+    if (id == m_sliceLink.aId) {
+        ring = &m_sliceLink.pendingA;
+    } else if (id == m_sliceLink.bId) {
+        ring = &m_sliceLink.pendingB;
+    }
+    if (ring) {
+        ring->record(llround(mhz * 1e6), QDateTime::currentMSecsSinceEpoch());
     }
 }
 

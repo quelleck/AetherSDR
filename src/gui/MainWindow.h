@@ -1384,8 +1384,8 @@ private:
         QPointer<SliceModel> a;
         QPointer<SliceModel> b;
         int originId{-1};  // last genuine mover; the settle check re-asserts it
-        AetherSDR::SliceLinkPolicy::PendingWrites pendingA;  // writes toward A
-        AetherSDR::SliceLinkPolicy::PendingWrites pendingB;  // writes toward B
+        AetherSDR::SliceLinkPolicy::PendingWrites pendingA;  // echo expectations for A
+        AetherSDR::SliceLinkPolicy::PendingWrites pendingB;  // echo expectations for B
         bool suspendedByLock{false};
         QVector<QMetaObject::Connection> connections;
         bool active() const { return aId >= 0 && bId >= 0; }
@@ -1398,6 +1398,7 @@ private:
     void engageSliceLink(int aId, int bId);                       // MainWindow_Wiring.cpp
     void dissolveSliceLink(const char* reason);                   // MainWindow_Wiring.cpp
     void onSliceLinkFrequencyChanged(SliceModel* s, double mhz);  // MainWindow_Wiring.cpp
+    void onSliceLinkFrequencyCommandIssued(SliceModel* s, double mhz);  // MainWindow_Wiring.cpp
     void onSliceLinkLockedChanged(SliceModel* s, bool locked);    // MainWindow_Wiring.cpp
     void scheduleSliceLinkSettleCheck();                          // MainWindow_Wiring.cpp
     int sliceLinkPeerOf(int sliceId) const;                       // MainWindow_Wiring.cpp
