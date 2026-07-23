@@ -1,4 +1,12 @@
 cmake_minimum_required(VERSION 3.25)
+
+# CMake 3.29+ can safely de-duplicate libraries for linkers that support it.
+# This avoids duplicate-library warnings from Apple's linker while preserving
+# compatibility with the project's CMake 3.25 minimum.
+if(POLICY CMP0156)
+    cmake_policy(SET CMP0156 NEW)
+endif()
+
 project(AetherSDR VERSION 26.7.3 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -168,7 +176,7 @@ if(PkgConfig_FOUND)
     pkg_check_modules(PORTAUDIO portaudio-2.0)
 endif()
 
-# FFTW3 (required for NR2 spectral noise reduction)
+# FFTW3 (required by vendored WDSP; also used by NR2 spectral noise reduction)
 # Windows: run scripts/setup/setup-fftw.ps1 first to download prebuilt DLLs
 # Linux:   apt install libfftw3-dev
 # macOS:   brew install fftw
@@ -179,9 +187,7 @@ if(WIN32)
         set(FFTW3_INCLUDE_DIRS "${FFTW3_ROOT}/include")
         set(FFTW3_LIBRARIES "${FFTW3_ROOT}/lib/fftw3.lib")
         set(FFTW3_DLL "${FFTW3_ROOT}/bin/libfftw3-3.dll")
-    else()
-        message(WARNING "FFTW3 not found. Run scripts/setup/setup-fftw.ps1 to download it. NR2 will use fallback FFT.")
-    endif()
+    endif()   # not-found is handled by the unified FATAL_ERROR below
 else()
     if(PkgConfig_FOUND)
         pkg_check_modules(FFTW3 fftw3)
@@ -195,6 +201,16 @@ else()
             set(FFTW3_INCLUDE_DIRS ${FFTW3_INC})
         endif()
     endif()
+endif()
+
+# The vendored WDSP DSP library (third_party/wdsp) hard-requires FFTW3 — unlike
+# NR2, which had a fallback FFT. Fail at configure with a clear message instead
+# of letting the build proceed to a cryptic "undefined FFTW symbol" link error.
+if(NOT FFTW3_FOUND)
+    message(FATAL_ERROR
+        "FFTW3 is required by the vendored WDSP DSP library (third_party/wdsp) but "
+        "was not found. Install it and reconfigure — Linux: apt install libfftw3-dev; "
+        "macOS: brew install fftw; Windows: run scripts/setup/setup-fftw.ps1.")
 endif()
 
 # Bundled RADE (BSD-2) — FreeDV Radio Autoencoder digital voice codec
@@ -508,6 +524,7 @@ endif()
 # Sources
 set(CORE_SOURCES
     src/core/backends/flex/FlexBackend.cpp   # aetherd RFC step 2.2 (§5.5)
+    src/core/dsp/WdspChannel.cpp
     src/core/AppSettings.cpp
     src/core/GpuSelector.cpp
     src/core/AgcTCalibrator.cpp
@@ -550,8 +567,14 @@ set(CORE_SOURCES
     src/core/SpectralNR.cpp
     src/core/MonoDspStereoAdapter.cpp
     src/core/PanadapterStream.cpp
+    src/core/TimeFrameVoter.cpp
+    src/core/WwvDecoder.cpp
+    src/core/WwvbDecoder.cpp
+    src/core/AetherClockEngine.cpp
+    src/core/AetherClockSettings.cpp
     src/core/PacketLossConcealment.cpp
     src/core/PerfTelemetry.cpp
+    src/core/MemoryTelemetry.cpp
     src/core/RigctlProtocol.cpp
     src/core/SmartCatProtocol.cpp
     src/core/SmartCatSession.cpp
@@ -675,6 +698,7 @@ elseif(UNIX)
 endif()
 
 set(MODEL_SOURCES
+    src/models/Nr2SettingsModel.cpp
     src/models/RadioModel.cpp
     src/models/DeclaredBands.cpp
     src/models/RadioSession.cpp
@@ -701,6 +725,7 @@ set(MODEL_SOURCES
     src/models/BandPlanManager.cpp
     src/models/XvtrPolicy.cpp
     src/models/AntennaGeniusModel.cpp
+    src/models/AetherClockModel.cpp
 )
 
 # Vendored QGeoView (LGPL-3.0) — slippy-map widget for the common
@@ -709,6 +734,7 @@ set(MODEL_SOURCES
 add_subdirectory(third_party/QGeoView/lib EXCLUDE_FROM_ALL)
 
 set(GUI_SOURCES
+    src/gui/Contribute.cpp
     src/gui/MainWindow.cpp
     src/gui/MainWindowHelpers.cpp
     src/gui/MainWindow_Controllers.cpp
@@ -719,6 +745,7 @@ set(GUI_SOURCES
     src/gui/MainWindow_DigitalModes.cpp
     src/gui/MainWindow_Spots.cpp
     src/gui/MainWindow_SwrSweep.cpp
+    src/gui/MainWindow_AetherClock.cpp
     src/gui/MainWindow_Wiring.cpp
     src/gui/MainWindow_Nets.cpp
     src/gui/MainWindow_Callsign.cpp
@@ -821,6 +848,8 @@ set(GUI_SOURCES
     src/gui/WaveApplet.cpp
     src/gui/WaveformScopeModel.cpp
     src/gui/WaveformWidget.cpp
+    src/gui/AetherClockApplet.cpp
+    src/gui/ClockAlignmentWidget.cpp
     src/gui/ClientEqApplet.cpp
     src/gui/ClientEqCurveWidget.cpp
     src/gui/ClientEqEditor.cpp
@@ -1103,6 +1132,10 @@ endif()
 
 qt_add_resources(RESOURCES resources/resources.qrc)
 
+# WDSP 2.00 is an engine-only dependency for raw-IQ radio backends. Its C API,
+# platform shims, and FFTW dependency remain private to aethercore.
+add_subdirectory(third_party/wdsp EXCLUDE_FROM_ALL)
+
 # aetherd RFC step 1: engine static library — src/core + src/models
 # plus the vendored C/C++ sources those engine files compile against
 # (rnnoise, ggmorse, RADE, specbleach; mosquitto/rtmidi are appended below in
@@ -1117,6 +1150,7 @@ add_library(aethercore STATIC
     ${RADE_SOURCES}
     ${SPECBLEACH_SOURCES}
 )
+target_link_libraries(aethercore PRIVATE aether::wdsp)
 
 add_executable(AetherSDR
     src/main.cpp
@@ -1465,6 +1499,18 @@ if((UNIX OR WIN32) AND ENABLE_DSTAR)
         ${DIGITAL_VOICE_WAVEFORM_DIR}/main.c
         ${DIGITAL_VOICE_WAVEFORM_DIR}/resampler.c
     )
+
+    # ThumbDV is vendored C code and is also compiled directly by its queue
+    # test, so suppress platform deprecation warnings at the source boundary.
+    if(MSVC)
+        set_source_files_properties(
+            ${DIGITAL_VOICE_WAVEFORM_DIR}/ThumbDV/thumbDV.c
+            PROPERTIES COMPILE_FLAGS "/w")
+    else()
+        set_source_files_properties(
+            ${DIGITAL_VOICE_WAVEFORM_DIR}/ThumbDV/thumbDV.c
+            PROPERTIES COMPILE_FLAGS "-w")
+    endif()
 
     add_executable(aether-dv-waveform ${DIGITAL_VOICE_WAVEFORM_SOURCES})
     set_target_properties(aether-dv-waveform PROPERTIES
@@ -2036,6 +2082,11 @@ if (USE_SYSTEM_RTMIDI)
     target_link_libraries(aethercore PUBLIC PkgConfig::rtmidi)
 else()
     target_sources(aethercore PRIVATE third_party/rtmidi/RtMidi.cpp)
+    if(MSVC)
+        set_source_files_properties(third_party/rtmidi/RtMidi.cpp PROPERTIES COMPILE_FLAGS "/w")
+    else()
+        set_source_files_properties(third_party/rtmidi/RtMidi.cpp PROPERTIES COMPILE_FLAGS "-w")
+    endif()
     # PUBLIC: MidiControlManager.h includes RtMidi.h
     target_include_directories(aethercore PUBLIC third_party/rtmidi)
 endif()
@@ -2477,7 +2528,7 @@ if(ENABLE_MQTT)
             target_compile_definitions(aethercore PUBLIC HAVE_MQTT_TLS)
         endif()
     else()
-        target_include_directories(aethercore PRIVATE
+        target_include_directories(aethercore SYSTEM PRIVATE
             ${MOSQUITTO_DIR}/include
             ${MOSQUITTO_DIR}/src)
         target_sources(aethercore PRIVATE ${MOSQUITTO_SOURCES})
@@ -2543,6 +2594,10 @@ endforeach()
 # ── Unit test harnesses ──────────────────────────────────────────────────────
 # Standalone DSP smoke tests. Built alongside the main target so they share
 # the same toolchain and warning flags. Run manually with ./build/<target>.
+
+add_executable(wdsp_channel_test tests/wdsp_channel_test.cpp)
+target_link_libraries(wdsp_channel_test PRIVATE aethercore)
+add_test(NAME wdsp_channel_test COMMAND wdsp_channel_test)
 
 add_executable(client_eq_test
     tests/client_eq_test.cpp
@@ -2633,6 +2688,16 @@ foreach(APP_SETTINGS_SCENARIO
         COMMAND app_settings_safety_test ${APP_SETTINGS_SCENARIO})
 endforeach()
 
+add_executable(nr2_settings_model_test
+    tests/nr2_settings_model_test.cpp
+    src/models/Nr2SettingsModel.cpp
+    src/core/AppSettings.cpp
+)
+target_include_directories(nr2_settings_model_test PRIVATE src tests)
+target_link_libraries(nr2_settings_model_test PRIVATE Qt6::Core Qt6::Test)
+set_target_properties(nr2_settings_model_test PROPERTIES AUTOMOC ON)
+add_test(NAME nr2_settings_model_test COMMAND nr2_settings_model_test)
+
 add_executable(panadapter_model_rx_antenna_test
     tests/panadapter_model_rx_antenna_test.cpp
     src/models/PanadapterModel.cpp
@@ -2672,6 +2737,12 @@ target_include_directories(kiwi_rebind_tracker_test PRIVATE src)
 target_link_libraries(kiwi_rebind_tracker_test PRIVATE Qt6::Core)
 add_test(NAME kiwi_rebind_tracker_test COMMAND kiwi_rebind_tracker_test)
 
+# Center Lock band-recall re-bind policy — header-only, pure logic.
+add_executable(center_lock_rebind_tracker_test tests/center_lock_rebind_tracker_test.cpp)
+target_include_directories(center_lock_rebind_tracker_test PRIVATE src)
+target_link_libraries(center_lock_rebind_tracker_test PRIVATE Qt6::Core)
+add_test(NAME center_lock_rebind_tracker_test COMMAND center_lock_rebind_tracker_test)
+
 add_executable(declared_bands_test
     tests/declared_bands_test.cpp
     src/models/DeclaredBands.cpp
@@ -2688,6 +2759,21 @@ target_include_directories(radio_discovery_test PRIVATE src)
 target_compile_definitions(radio_discovery_test PRIVATE AETHERSDR_TESTING)
 target_link_libraries(radio_discovery_test PRIVATE Qt6::Core Qt6::Network)
 add_test(NAME radio_discovery_test COMMAND radio_discovery_test)
+
+# Agent automation bridge phaseful-gesture lifecycle (#4353). Uses two real
+# QLocalSocket clients so the regression proves an independent request can run
+# while a QSlider remains genuinely down, plus auth/read-only/TX cleanup rails.
+add_executable(automation_server_gesture_test
+    tests/automation_server_gesture_test.cpp
+)
+target_include_directories(automation_server_gesture_test PRIVATE src tests)
+target_link_libraries(automation_server_gesture_test PRIVATE
+    aethercore Qt6::Core Qt6::Network Qt6::Widgets
+)
+set_target_properties(automation_server_gesture_test PROPERTIES AUTOMOC ON)
+add_test(NAME automation_server_gesture_test COMMAND automation_server_gesture_test)
+set_tests_properties(automation_server_gesture_test PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 add_executable(client_quindar_test
     tests/client_quindar_test.cpp
@@ -3849,6 +3935,30 @@ target_link_libraries(amp_model_test PRIVATE aethercore Qt6::Core Qt6::Test)
 set_target_properties(amp_model_test PROPERTIES AUTOMOC ON)
 add_test(NAME amp_model_test COMMAND amp_model_test)
 
+add_executable(wwv_decoder_test tests/wwv_decoder_test.cpp)
+target_include_directories(wwv_decoder_test PRIVATE src)
+target_link_libraries(wwv_decoder_test PRIVATE aethercore Qt6::Core Qt6::Test)
+set_target_properties(wwv_decoder_test PROPERTIES AUTOMOC ON)
+add_test(NAME wwv_decoder_test COMMAND wwv_decoder_test)
+
+add_executable(wwvb_decoder_test tests/wwvb_decoder_test.cpp)
+target_include_directories(wwvb_decoder_test PRIVATE src)
+target_link_libraries(wwvb_decoder_test PRIVATE aethercore Qt6::Core Qt6::Test)
+set_target_properties(wwvb_decoder_test PROPERTIES AUTOMOC ON)
+add_test(NAME wwvb_decoder_test COMMAND wwvb_decoder_test)
+
+add_executable(aetherclock_engine_test tests/aetherclock_engine_test.cpp)
+target_include_directories(aetherclock_engine_test PRIVATE src)
+target_link_libraries(aetherclock_engine_test PRIVATE aethercore Qt6::Core Qt6::Test)
+set_target_properties(aetherclock_engine_test PROPERTIES AUTOMOC ON)
+add_test(NAME aetherclock_engine_test COMMAND aetherclock_engine_test)
+
+add_executable(aetherclock_model_test tests/aetherclock_model_test.cpp)
+target_include_directories(aetherclock_model_test PRIVATE src)
+target_link_libraries(aetherclock_model_test PRIVATE aethercore Qt6::Core Qt6::Test)
+set_target_properties(aetherclock_model_test PROPERTIES AUTOMOC ON)
+add_test(NAME aetherclock_model_test COMMAND aetherclock_model_test)
+
 add_executable(aetherd_amp_decode_test tests/aetherd_amp_decode_test.cpp)
 target_include_directories(aetherd_amp_decode_test PRIVATE src)
 target_link_libraries(aetherd_amp_decode_test PRIVATE aethercore Qt6::Core Qt6::Test)
@@ -3926,6 +4036,14 @@ if(UNIX)
 endif()
 set_target_properties(perf_telemetry_test PROPERTIES AUTOMOC ON)
 add_test(NAME perf_telemetry_test COMMAND perf_telemetry_test)
+
+add_executable(memory_telemetry_test
+    tests/memory_telemetry_test.cpp
+    src/core/MemoryTelemetry.cpp
+)
+target_include_directories(memory_telemetry_test PRIVATE src)
+target_link_libraries(memory_telemetry_test PRIVATE Qt6::Core)
+add_test(NAME memory_telemetry_test COMMAND memory_telemetry_test)
 
 add_executable(memory_recall_policy_test
     tests/memory_recall_policy_test.cpp
@@ -4079,6 +4197,12 @@ target_include_directories(midi_settings_test PRIVATE src)
 target_link_libraries(midi_settings_test PRIVATE Qt6::Core)
 add_test(NAME midi_settings_test COMMAND midi_settings_test)
 
+add_executable(midi_relative_cc_decoder_test
+    tests/midi_relative_cc_decoder_test.cpp
+)
+target_include_directories(midi_relative_cc_decoder_test PRIVATE src)
+add_test(NAME midi_relative_cc_decoder_test COMMAND midi_relative_cc_decoder_test)
+
 add_executable(transmit_model_test
     tests/transmit_model_test.cpp
     src/models/TransmitModel.cpp
@@ -4149,6 +4273,24 @@ target_link_libraries(amp_applet_test PRIVATE
 )
 set_target_properties(amp_applet_test PROPERTIES AUTOMOC ON)
 add_test(NAME amp_applet_test COMMAND amp_applet_test)
+
+add_executable(tx_applet_power_reconciliation_test
+    tests/tx_applet_power_reconciliation_test.cpp
+    src/gui/TxApplet.cpp
+    src/gui/AtuPreTuneDialog.cpp
+    src/gui/DragValuePopup.cpp
+    src/gui/FramelessResizer.cpp
+    src/gui/FramelessWindowTitleBar.cpp
+)
+target_include_directories(tx_applet_power_reconciliation_test PRIVATE src)
+target_link_libraries(tx_applet_power_reconciliation_test PRIVATE
+    aethercore Qt6::Core Qt6::Widgets Qt6::Test
+)
+set_target_properties(tx_applet_power_reconciliation_test PROPERTIES AUTOMOC ON)
+add_test(NAME tx_applet_power_reconciliation_test
+         COMMAND tx_applet_power_reconciliation_test)
+set_tests_properties(tx_applet_power_reconciliation_test PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 add_executable(container_manager_test
     tests/container_manager_test.cpp
