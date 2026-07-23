@@ -11,12 +11,14 @@
 #include "models/RadioModel.h"
 #include "models/BandSettings.h"
 #include "models/AntennaGeniusModel.h"
+#include "models/SliceLinkPolicy.h"
 #include "core/AppSettings.h"
 #include "core/KiwiSdrTxMutePolicy.h"  // optimistic-unkey Kiwi mute latch
 #include "core/RadioMessageTypes.h"   // MessageSeverity for onRadioMessage slot
 #include "core/RadioDiscovery.h"
 #include "core/AudioEngine.h"
 #include "core/ReceivePresentationSync.h"
+#include "gui/CenterLockRebindTracker.h"
 #include "gui/KiwiRebindTracker.h"      // #4158 band-recall Kiwi re-bind policy
 #include "core/CatPort.h"
 #ifdef HAVE_WEBSOCKETS
@@ -95,8 +97,12 @@ class QSystemTrayIcon;
 
 namespace AetherSDR {
 
+class AetherClockApplet;
+class AetherClockEngine;
+class AetherClockModel;
 class AutomationServer;
 class ConnectionPanel;
+class ContributeDialog;
 class TitleBar;
 class KiwiSdrManager;
 class SpectrumWidget;
@@ -129,6 +135,9 @@ class CallsignLookupDialog;
 class Ax25HfPacketDecodeDialog;
 class PskReporterMapDialog;
 class GpsLocationDialog;
+#ifdef AETHER_ASR_ENABLED
+class CopyAssistController;
+#endif
 class FlexControlDialog;
 class MidiMappingDialog;
 #ifdef HAVE_HIDAPI
@@ -209,8 +218,13 @@ public:
     // actions registered keysTx (the caller decides policy; the registration
     // site declares the data). Returns a ShortcutFire* code.
     Q_INVOKABLE int fireShortcutAction(const QString& id, bool allowTx);
+    // Inject one learned VFO-knob CC value through MidiControlManager for
+    // automation proof. Returns 0 on acceptance, 1 if MIDI is unavailable,
+    // and 2 for an out-of-range MIDI value.
+    Q_INVOKABLE int injectMidiVfoCcForAutomation(int value);
     QJsonObject automationSetSliceReceiveSource(const QString& arg);
     QJsonObject automationSetCenterLock(int sliceId, bool enabled);
+    QJsonObject automationSetSliceLink(int aId, int bId, bool on);  // MainWindow_Wiring.cpp
     QJsonObject automationTune(double mhz, int sliceId = -1);
     QJsonObject automationTargetTune(double mhz);
     QJsonObject automationActivateMemory(int memoryIndex,
@@ -395,7 +409,15 @@ private:
     void syncKiwiSdrTransmitMute();
     void refreshKiwiSdrVirtualAudioControls();
     void setKiwiSdrVirtualAntennaForSlice(int sliceId, const QString& profileId);
+    // Worker for the above. selectSlice=false suppresses the active-slice steal
+    // for automatic re-arms (band-recall finish, #4158 recreation re-bind).
+    void setKiwiSdrVirtualAntennaForSliceInternal(int sliceId,
+                                                  const QString& profileId,
+                                                  bool selectSlice);
     void clearKiwiSdrVirtualAntennaForSlice(int sliceId);
+    void prepareKiwiSdrBandRecallForPan(const QString& panId);
+    bool finishPreparedKiwiSdrBandRecallForSlice(SliceModel* slice);
+    void finishPreparedKiwiSdrBandRecallForPan(const QString& panId);
     void updateKiwiSdrVirtualTrackingForSlice(SliceModel* slice);
     void updateKiwiSdrVirtualAudioControlsForSlice(SliceModel* slice,
                                                    bool includeEnable = true);
@@ -488,6 +510,7 @@ private:
         KiwiSdrUiSyncPanadapterStates = 0x08,
     };
     void scheduleKiwiSdrUiSync(int flags);
+    void noteBandRecallForPan(const QString& panId);
     void wirePanadapter(PanadapterApplet* applet);
     void wirePanDisplayStatus(PanadapterApplet* applet, PanadapterModel* pan);
     void reassertUnmutedSliceAudioForPan(const QString& panId);
@@ -622,6 +645,9 @@ private:
     void showNetworkDiagnosticsDialog();
     void showAgcCalibrationDialog(int sliceId);
     void showAx25HfPacketDecodeDialog();
+#ifdef AETHER_ASR_ENABLED
+    void showCopyAssist();
+#endif
     void scheduleDigitalVoiceAutoStart();
     void stopDigitalVoiceService(bool waitForExit);
     void showPskReporterMapDialog();
@@ -987,13 +1013,26 @@ private:
     int              m_kiwiSdrTxMaskEpoch{0};
     QMetaObject::Connection m_kiwiSdrAudioMuteConnection;
     QHash<int, bool> m_kiwiSdrVirtualPreviousMute;
+    struct KiwiSdrBandRecallPreparation {
+        QString panId;
+        QString profileId;
+    };
+    QHash<int, KiwiSdrBandRecallPreparation> m_kiwiSdrBandRecallPreparations;
+    // Per-pan epoch so a stale prepare() grace timer can't finish/clear a newer
+    // band recall that superseded it within the grace window.
+    QHash<QString, quint64> m_kiwiSdrBandRecallGenerations;
     QSet<QString>    m_kiwiSdrFlexDisplayPans;
-    // Retains a KiwiSDR replacement across the slice remove->re-add a FLEX
-    // band-stack recall performs (band_persistence drops+re-creates the slice
-    // with the same id at the new band). The tracker is the pure policy; the
-    // grace window itself is a QTimer::singleShot in onSliceRemoved. (#4158)
+    // Retain client-side receiver state across the slice teardown/rebuild a
+    // FLEX band-stack recall performs. The trackers are pure lifecycle policy;
+    // MainWindow owns their side effects and shared grace window.
     KiwiRebindTracker    m_kiwiRebind;
-    static constexpr int kKiwiSdrRebindGraceMs = 1500;
+    CenterLockRebindTracker m_centerLockRebind;
+    // Per-pan band-recall generation: makes the shared grace timer's Kiwi
+    // marker clear generation-safe against overlapping recalls, the same way
+    // the Center Lock tracker guards its own resolution.
+    QHash<QString, quint64> m_bandRecallGenerationByPan;
+    quint64              m_bandRecallGeneration{0};
+    static constexpr int kBandRecallRecreateGraceMs = 1500;
     ReceivePresentationSync m_receivePresentationSync;
     ReceiveAudioDelayEstimator m_receiveAudioDelayEstimator;
     ReceivePresentationQueue<std::function<void()>> m_receivePresentationVisualQueue;
@@ -1035,10 +1074,16 @@ private:
     NetReminderBanner* m_netReminderBanner{nullptr};
     QSystemTrayIcon* m_trayIcon{nullptr};
     QPointer<Ax25HfPacketDecodeDialog> m_ax25HfPacketDecodeDialog;
+#ifdef AETHER_ASR_ENABLED
+    QPointer<CopyAssistController> m_copyAssistController;
+    QPointer<PanadapterApplet> m_copyAssistApplet;
+    QMetaObject::Connection m_copyAssistFreqConn; // active-slice retune → clear decode
+#endif
     QPointer<PskReporterMapDialog> m_pskReporterMapDialog;
     QPointer<GpsLocationDialog> m_gpsLocationDialog;
     QPointer<FlexControlDialog> m_flexControlDialog;
     QPointer<WhatsNewDialog> m_whatsNewDialog;
+    QPointer<ContributeDialog> m_contributeDialog;
     QPointer<AetherDspDialog> m_dspDialog;
 #ifdef HAVE_MQTT
     QPointer<MqttSettingsDialog> m_mqttSettingsDialog;
@@ -1081,6 +1126,9 @@ private:
     QLabel* m_addPanLabel{nullptr};
     QLabel* m_tnfIndicator{nullptr};
     QLabel* m_cwxIndicator{nullptr};
+#ifdef AETHER_ASR_ENABLED
+    QLabel* m_asrIndicator{nullptr};  // status-bar ASR (Copy Assist) toggle
+#endif
     CwxPanel* m_cwxPanel{nullptr};
     DvkPanel* m_dvkPanel{nullptr};
     QLabel* m_dvkIndicator{nullptr};
@@ -1278,6 +1326,12 @@ private:
     ShortcutManager m_shortcutManager;
     UpdateChecker* m_updateChecker{nullptr};
 
+// AetherClock (MainWindow_AetherClock.cpp)
+    AetherClockEngine* m_clockEngine{nullptr};
+    AetherClockModel* m_clockModel{nullptr};
+    QMetaObject::Connection m_clockDaxConn;  // daxAudioReady feed — live only while the engine runs
+    void setupAetherClock();
+
 #ifdef HAVE_RADE
     RADEEngine* m_radeEngine{nullptr};
     QThread*    m_radeThread{nullptr};
@@ -1329,6 +1383,8 @@ private:
     void saveCenterLockSettings() const;
     void persistCenterLockForSlice(const SliceModel* slice);
     void restoreCenterLockForPan(const QString& panId);
+    void showCenterLockReleaseNotification(const QString& panId,
+                                           const QString& detail);
     void setCenterLockForSlice(SliceModel* slice, bool on);
     void setCenterLockForPan(const QString& panId, int sliceId, bool on,
                              bool persist = true);
@@ -1345,6 +1401,42 @@ private:
     double centerLockDisplayFrequency(const SliceModel* slice, double mhz) const;
     void recenterCenterLockForPan(const QString& panId);
     void recenterCenterLocks();
+
+    // Slice Link — independent cross-panadapter bidirectional VFO pairs. Each
+    // owned slice may belong to at most one pair. Frequency changes propagate
+    // through applyTuneRequest ("slice-link" source), so lock/SWR guards,
+    // reveal/pan-follow, and Kiwi tracking all apply for free.
+    // Decision logic is pure (src/models/SliceLinkPolicy.h). Session-only
+    // state — slice ids are radio-assigned and ephemeral, never persisted.
+    struct SliceLinkState {
+        int aId{-1};
+        int bId{-1};
+        QPointer<SliceModel> a;
+        QPointer<SliceModel> b;
+        int originId{-1};  // last genuine mover; the settle check re-asserts it
+        AetherSDR::SliceLinkPolicy::PendingWrites pendingA;  // echo expectations for A
+        AetherSDR::SliceLinkPolicy::PendingWrites pendingB;  // echo expectations for B
+        bool suspendedByLock{false};
+        QVector<QMetaObject::Connection> connections;
+        quint64 settleGeneration{0};
+        bool active() const { return aId >= 0 && bId >= 0; }
+    };
+    QVector<SliceLinkState> m_sliceLinks;
+    bool m_applyingSliceLink{false};
+    // Monotonic across every pair lifecycle so a pending settle timer from a
+    // dissolved pair can never act on a newly-created pair with the same ids.
+    quint64 m_sliceLinkGeneration{0};
+    SliceLinkState* sliceLinkFor(int sliceId);                    // MainWindow_Wiring.cpp
+    const SliceLinkState* sliceLinkFor(int sliceId) const;        // MainWindow_Wiring.cpp
+    void engageSliceLink(int aId, int bId);                       // MainWindow_Wiring.cpp
+    void dissolveSliceLink(int aId, int bId, const char* reason); // MainWindow_Wiring.cpp
+    void dissolveAllSliceLinks(const char* reason);               // MainWindow_Wiring.cpp
+    void onSliceLinkFrequencyChanged(SliceModel* s, double mhz);  // MainWindow_Wiring.cpp
+    void onSliceLinkFrequencyCommandIssued(SliceModel* s, double mhz);  // MainWindow_Wiring.cpp
+    void onSliceLinkLockedChanged(SliceModel* s, bool locked);    // MainWindow_Wiring.cpp
+    void scheduleSliceLinkSettleCheck(int sliceId);               // MainWindow_Wiring.cpp
+    int sliceLinkPeerOf(int sliceId) const;                       // MainWindow_Wiring.cpp
+    void refreshSliceLinkUi();                                    // MainWindow_Wiring.cpp
 
     WfmDemodulator* m_wfmDemod{nullptr};
     int             m_wfmSliceId{-1};
