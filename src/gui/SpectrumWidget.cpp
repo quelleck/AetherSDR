@@ -1,4 +1,5 @@
 #include "SpectrumWidget.h"
+#include "DbmRangeTransition.h"
 #include "KiwiSdrTraceMath.h"
 #include "NativeWidgetTopology.h"
 #include "PanadapterRenderScheduler.h"
@@ -83,6 +84,16 @@ namespace {
 constexpr int kDssMaxIncrementalUploadRows = 8;
 
 #ifdef AETHER_GPU_SPECTRUM
+QSize evenAlignedRhiSize(QSize size)
+{
+    if (size.isEmpty()) {
+        return size;
+    }
+    size.rwidth() += size.width() & 1;
+    size.rheight() += size.height() & 1;
+    return size;
+}
+
 bool waterfallGpuFrequencyPreviewRequested()
 {
     if (!qEnvironmentVariableIsSet("AETHER_WF_GPU_PREVIEW")) {
@@ -304,8 +315,6 @@ static constexpr int kPanDragSettleMs = 160;
 static constexpr int kFrequencyRangeCommandMs = 33;
 static constexpr int kFrequencyRangeSettleMs = 300;
 static constexpr int kResizeBufferSettleMs = 120;
-static constexpr int kDbmReleaseHoldFrames = 10;
-static constexpr int kDbmReleaseErrorSampleCount = 256;
 static constexpr float kDbmReleasePreviewChangeThresholdDb = 0.05f;
 static constexpr float kDbmReleaseRebaseMinImprovementDb = 0.75f;
 static constexpr int kFilterEdgeGrabPx = 8;
@@ -889,12 +898,44 @@ QVariantMap SpectrumWidget::automationRhiSnapshot() const
     m[QStringLiteral("colorBufferH")] = fixed.height();
     // What an even-aligned pin *should* be for the current size — lets a test
     // assert the #4091 alignment without recomputing the formula itself.
-    const int expW = static_cast<int>(std::ceil(width() * dpr));
-    const int expH = static_cast<int>(std::ceil(height() * dpr));
-    m[QStringLiteral("expectedEvenW")] = expW + (expW & 1);
-    m[QStringLiteral("expectedEvenH")] = expH + (expH & 1);
+    const QSize expected = evenAlignedRhiSize(
+        QSize(static_cast<int>(std::ceil(width() * dpr)),
+              static_cast<int>(std::ceil(height() * dpr))));
+    m[QStringLiteral("expectedEvenW")] = expected.width();
+    m[QStringLiteral("expectedEvenH")] = expected.height();
     m[QStringLiteral("evenAligned")] =
         !autoSized && (fixed.width() % 2 == 0) && (fixed.height() % 2 == 0);
+    // QSize() is already (-1,-1); keep the JSON sentinel explicit so the
+    // automation contract cannot be mistaken for a real zero-sized texture.
+    const QSize unsetTextureSize(-1, -1);
+    const QSize overlaySize = m_ovGpuTex ? m_ovGpuTex->pixelSize() : unsetTextureSize;
+    const QSize backgroundSize = m_bgGpuTex ? m_bgGpuTex->pixelSize() : unsetTextureSize;
+    const QSize waterfallTextureSize =
+        m_wfGpuTex ? m_wfGpuTex->pixelSize() : unsetTextureSize;
+    const QSize waterfallImageSize = m_waterfall.size();
+    m[QStringLiteral("overlayTextureW")] = overlaySize.width();
+    m[QStringLiteral("overlayTextureH")] = overlaySize.height();
+    m[QStringLiteral("backgroundTextureW")] = backgroundSize.width();
+    m[QStringLiteral("backgroundTextureH")] = backgroundSize.height();
+    m[QStringLiteral("waterfallTextureW")] = waterfallTextureSize.width();
+    m[QStringLiteral("waterfallTextureH")] = waterfallTextureSize.height();
+    m[QStringLiteral("waterfallImageW")] = waterfallImageSize.width();
+    m[QStringLiteral("waterfallImageH")] = waterfallImageSize.height();
+    // The upload is safe whenever the GPU texture can hold the CPU image, i.e.
+    // texture >= image in both dimensions. initWaterfallPipeline floors the
+    // texture at 64x64, so a smaller retained image is still a safe (larger)
+    // texture; asserting exact equality here would false-negative that safe
+    // pop-out case, so report the fits-within invariant the field documents.
+    m[QStringLiteral("waterfallTextureMatchesImage")] =
+        !waterfallImageSize.isEmpty()
+        && waterfallTextureSize.width() >= waterfallImageSize.width()
+        && waterfallTextureSize.height() >= waterfallImageSize.height();
+    m[QStringLiteral("fullFrameTexturesEvenAligned")] =
+        !overlaySize.isEmpty() && !backgroundSize.isEmpty()
+        && (overlaySize.width() % 2 == 0) && (overlaySize.height() % 2 == 0)
+        && (backgroundSize.width() % 2 == 0) && (backgroundSize.height() % 2 == 0);
+    m[QStringLiteral("fullFrameTexturesMatchColorBuffer")] =
+        !autoSized && overlaySize == fixed && backgroundSize == fixed;
 #else
     m[QStringLiteral("gpu")] = false;
 #endif
@@ -1180,17 +1221,61 @@ QVariantMap SpectrumWidget::automationDssSnapshot() const
 
     int peakBin = -1;
     float peakDbm = -1000.0f;
-    if (m_dss.rowCount() > 0) {
-        const float* row = m_dss.rowDataRing(m_dss.headRing());
+    float frontMinDbm = -1000.0f;
+    float frontMaxDbm = -1000.0f;
+    float frontSpanDb = 0.0f;
+    int frontMinValueBins = 0;
+    int frontLongestFlatRunBins = 0;
+    int maxMinValueBins = 0;
+    int maxLongestFlatRunBins = 0;
+    int flatRows = 0;
+    int nonFlatRows = 0;
+    for (int age = 0; age < m_dss.rowCount(); ++age) {
+        const int ring = (m_dss.headRing() + age) % m_dss.rows();
+        const float* row = m_dss.rowDataRing(ring);
+        const DssRenderer::RowStats rowStats = m_dss.rowStats(age);
         for (int c = 0; c < m_dss.cols(); ++c) {
-            if (peakBin < 0 || row[c] > peakDbm) {
+            if (!std::isfinite(row[c])) {
+                continue;
+            }
+            if (age == 0 && (peakBin < 0 || row[c] > peakDbm)) {
                 peakBin = c;
                 peakDbm = row[c];
             }
         }
+        if (rowStats.finiteBins == 0) {
+            continue;
+        }
+        const float rowSpanDb = rowStats.maxDbm - rowStats.minDbm;
+        if (age == 0) {
+            frontMinDbm = rowStats.minDbm;
+            frontMaxDbm = rowStats.maxDbm;
+            frontSpanDb = rowSpanDb;
+            frontMinValueBins = rowStats.minValueBins;
+            frontLongestFlatRunBins = rowStats.longestFlatRunBins;
+        }
+        maxMinValueBins = std::max(maxMinValueBins, rowStats.minValueBins);
+        maxLongestFlatRunBins =
+            std::max(maxLongestFlatRunBins, rowStats.longestFlatRunBins);
+        if (rowSpanDb > 0.01f) {
+            ++nonFlatRows;
+        } else {
+            ++flatRows;
+        }
     }
     m[QStringLiteral("dssVisiblePeakBin")] = peakBin;
     m[QStringLiteral("dssVisiblePeakDbm")] = peakDbm;
+    m[QStringLiteral("dssVisibleFrontMinDbm")] = frontMinDbm;
+    m[QStringLiteral("dssVisibleFrontMaxDbm")] = frontMaxDbm;
+    m[QStringLiteral("dssVisibleFrontSpanDb")] = frontSpanDb;
+    m[QStringLiteral("dssVisibleFrontMinValueBins")] = frontMinValueBins;
+    m[QStringLiteral("dssVisibleFrontLongestFlatRunBins")] =
+        frontLongestFlatRunBins;
+    m[QStringLiteral("dssVisibleMaxMinValueBins")] = maxMinValueBins;
+    m[QStringLiteral("dssVisibleMaxLongestFlatRunBins")] =
+        maxLongestFlatRunBins;
+    m[QStringLiteral("dssVisibleFlatRows")] = flatRows;
+    m[QStringLiteral("dssVisibleNonFlatRows")] = nonFlatRows;
     return m;
 }
 
@@ -2265,7 +2350,8 @@ void SpectrumWidget::loadDisplaySourceTraceSettings(int legacyNoiseFloorPosition
 {
     m_flexNoiseFloorPosition = std::clamp(legacyNoiseFloorPosition, 1, 99);
     m_kiwiNoiseFloorPosition = m_flexNoiseFloorPosition;
-    m_flexDssFloorDepth = std::clamp(legacyDssFloorDepth, 0, 24);
+    m_flexDssFloorDepth = static_cast<float>(
+        std::clamp(legacyDssFloorDepth, 0, 24));
     m_kiwiDssFloorDepth = m_flexDssFloorDepth;
 
     const QString raw = AppSettings::instance()
@@ -2285,7 +2371,7 @@ void SpectrumWidget::loadDisplaySourceTraceSettings(int legacyNoiseFloorPosition
 
     const auto applySource = [](const QJsonObject& source,
                                 int& noiseFloorPosition,
-                                int& dssFloorDepth) {
+                                float& dssFloorDepth) {
         if (source.contains(QStringLiteral("noiseFloorPosition"))) {
             noiseFloorPosition = std::clamp(
                 source.value(QStringLiteral("noiseFloorPosition")).toInt(
@@ -2294,9 +2380,9 @@ void SpectrumWidget::loadDisplaySourceTraceSettings(int legacyNoiseFloorPosition
         }
         if (source.contains(QStringLiteral("dssFloorDepth"))) {
             dssFloorDepth = std::clamp(
-                source.value(QStringLiteral("dssFloorDepth")).toInt(
-                    dssFloorDepth),
-                0, 24);
+                static_cast<float>(source.value(
+                    QStringLiteral("dssFloorDepth")).toDouble(dssFloorDepth)),
+                0.0f, 24.0f);
         }
     };
 
@@ -2309,12 +2395,13 @@ void SpectrumWidget::loadDisplaySourceTraceSettings(int legacyNoiseFloorPosition
 
 void SpectrumWidget::saveDisplaySourceTraceSettings()
 {
-    auto sourceObject = [](int noiseFloorPosition, int dssFloorDepth) {
+    auto sourceObject = [](int noiseFloorPosition, float dssFloorDepth) {
         QJsonObject source;
         source.insert(QStringLiteral("noiseFloorPosition"),
                       std::clamp(noiseFloorPosition, 1, 99));
         source.insert(QStringLiteral("dssFloorDepth"),
-                      std::clamp(dssFloorDepth, 0, 24));
+                      static_cast<double>(
+                          std::clamp(dssFloorDepth, 0.0f, 24.0f)));
         return source;
     };
 
@@ -2970,9 +3057,30 @@ void SpectrumWidget::pinKiwiSdrManualSquelchLine()
     }
 }
 
+void SpectrumWidget::beginDbmRangeTransition(float oldMinDbm, float oldMaxDbm,
+                                             float newMinDbm, float newMaxDbm)
+{
+    const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
+    m_pendingDbmRangeEcho = true;
+    m_pendingDbmRangeEchoFromAutoFloor = false;
+    m_pendingDbmRangeEchoStartMs = nowMs;
+    m_pendingMinDbm = newMinDbm;
+    m_pendingMaxDbm = newMaxDbm;
+    m_dbmReleasePreviewOldMinDbm = oldMinDbm;
+    m_dbmReleasePreviewOldMaxDbm = oldMaxDbm;
+    m_dbmReleasePreviewNewMinDbm = newMinDbm;
+    m_dbmReleasePreviewNewMaxDbm = newMaxDbm;
+    m_dbmReleaseRebaseUntilMs =
+        (std::abs(oldMinDbm - newMinDbm) > kDbmReleasePreviewChangeThresholdDb
+         || std::abs(oldMaxDbm - newMaxDbm) > kDbmReleasePreviewChangeThresholdDb)
+        ? nowMs + kDbmRangeHandshakeTimeoutMs
+        : 0;
+    m_resetFftSmoothingOnNextFrame = true;
+}
+
 void SpectrumWidget::clearDbmReleaseRebase()
 {
-    m_holdFftUpdatesAfterDbmRelease = 0;
+    m_dbmReleaseRebaseUntilMs = 0;
     m_dbmReleasePreviewOldMinDbm = 0.0f;
     m_dbmReleasePreviewOldMaxDbm = 0.0f;
     m_dbmReleasePreviewNewMinDbm = 0.0f;
@@ -3770,9 +3878,11 @@ void SpectrumWidget::setWfColorScheme(int scheme) {
     update();
 }
 
-void SpectrumWidget::setDssFloorDepthForSource(bool kiwiSource, int dB, bool persist)
+void SpectrumWidget::setDssFloorDepthForSource(bool kiwiSource,
+                                               float dB,
+                                               bool persist)
 {
-    const int clampedDepth = std::clamp(dB, 0, 24);
+    const float clampedDepth = std::clamp(dB, 0.0f, 24.0f);
     if (kiwiSource) {
         m_kiwiDssFloorDepth = clampedDepth;
     } else {
@@ -3787,31 +3897,36 @@ void SpectrumWidget::setDssFloorDepthForSource(bool kiwiSource, int dB, bool per
         return;
     }
 
-    const float offsetDb = -static_cast<float>(clampedDepth);
+    const int previousResolvedDepth = dssFloorDepth();
+    const float offsetDb = -clampedDepth;
     if (offsetDb != m_dssFloorOffsetDb) {
         m_dssFloorOffsetDb = offsetDb;
         m_dss.invalidate();   // CPU fallback cache; mesh re-reads each frame
         // In 3D mode the visible dBm markings are anchored to this floor, so the
         // cached overlay must redraw even when the span is stable.
         markOverlayDirty();
-        emit dssFloorDepthResolved(clampedDepth);
+        const int resolvedDepth = dssFloorDepth();
+        if (resolvedDepth != previousResolvedDepth) {
+            emit dssFloorDepthResolved(resolvedDepth);
+        }
     }
     update();
 }
 
 void SpectrumWidget::restoreDssFloorDepthForCurrentSource(bool syncMenu)
 {
-    const int depth = m_kiwiSdrWaterfallActive
+    const float depth = m_kiwiSdrWaterfallActive
         ? m_kiwiDssFloorDepth
         : m_flexDssFloorDepth;
-    const float offsetDb = -static_cast<float>(depth);
+    const float offsetDb = -depth;
     if (offsetDb != m_dssFloorOffsetDb) {
         m_dssFloorOffsetDb = offsetDb;
         m_dss.invalidate();
         markOverlayDirty();
     }
     if (syncMenu) {
-        emit dssFloorDepthResolved(depth);
+        emit dssFloorDepthResolved(
+            static_cast<int>(std::lround(depth)));
     }
     update();
 }
@@ -6070,6 +6185,15 @@ void SpectrumWidget::setDbmRange(float minDbm, float maxDbm)
     applyDbmRangeImmediate(minDbm, maxDbm);
 }
 
+void SpectrumWidget::cancelPendingDbmRangeChange()
+{
+    m_pendingDbmRangeEcho = false;
+    m_pendingDbmRangeEchoFromAutoFloor = false;
+    m_pendingDbmRangeEchoStartMs = 0;
+    clearDbmReleaseRebase();
+    m_resetFftSmoothingOnNextFrame = true;
+}
+
 void SpectrumWidget::applyDbmRangeImmediate(float minDbm, float maxDbm)
 {
     if (!clampDbmRange(minDbm, maxDbm)) {
@@ -6079,7 +6203,6 @@ void SpectrumWidget::applyDbmRangeImmediate(float minDbm, float maxDbm)
     float ref = maxDbm;
     float dyn = maxDbm - clampedMinDbm;
     if (ref == m_refLevel && dyn == m_dynamicRange) {
-        clearDbmReleaseRebase();
         return;
     }
     clearDbmReleaseRebase();
@@ -6573,9 +6696,15 @@ void SpectrumWidget::updateSpectrum(const QVector<float>& binsDbm)
     }
 
     // The stream decoder switches to the requested dBm range immediately, but
-    // the radio can still send a few FFT frames encoded with the old range.
-    // Rebase those frames so the drag preview does not snap back on release.
-    if (m_holdFftUpdatesAfterDbmRelease > 0) {
+    // the radio can continue sending FFT frames encoded with the old range for
+    // several hundred milliseconds. Compare both interpretations with the last
+    // corrected frame so arrows and drags never feed the transition glitch into
+    // the trace, noise-floor tracker, waterfall fallback, or 3D history.
+    const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
+    if (m_dbmReleaseRebaseUntilMs > 0 && nowMs > m_dbmReleaseRebaseUntilMs) {
+        clearDbmReleaseRebase();
+    }
+    if (m_dbmReleaseRebaseUntilMs > 0) {
         const QVector<float>& sourceBins = *spectrumBins;
         const float oldRange =
             m_dbmReleasePreviewOldMaxDbm - m_dbmReleasePreviewOldMinDbm;
@@ -6584,36 +6713,18 @@ void SpectrumWidget::updateSpectrum(const QVector<float>& binsDbm)
         if (oldRange <= 0.0f || newRange <= 0.0f) {
             clearDbmReleaseRebase();
         } else if (!m_bins.isEmpty() && m_bins.size() == sourceBins.size()) {
-            --m_holdFftUpdatesAfterDbmRelease;
-            QVarLengthArray<float, kDbmReleaseErrorSampleCount> directErrors;
-            QVarLengthArray<float, kDbmReleaseErrorSampleCount> rebasedErrors;
-            const int step = qMax(1, sourceBins.size() / kDbmReleaseErrorSampleCount);
-            const int sampleCount = (sourceBins.size() + step - 1) / step;
-            directErrors.reserve(sampleCount);
-            rebasedErrors.reserve(sampleCount);
-            for (int i = 0; i < sourceBins.size(); i += step) {
-                const float directDbm = sourceBins[i];
-                const float frac = (m_dbmReleasePreviewNewMaxDbm - directDbm) / newRange;
-                const float rebasedDbm = m_dbmReleasePreviewOldMaxDbm - frac * oldRange;
-                directErrors.append(std::abs(directDbm - m_bins[i]));
-                rebasedErrors.append(std::abs(rebasedDbm - m_bins[i]));
-            }
-            auto median = [](auto& errors) {
-                auto mid = errors.begin() + errors.size() / 2;
-                std::nth_element(errors.begin(), mid, errors.end());
-                return *mid;
-            };
-            const float directMedian = median(directErrors);
-            const float rebasedMedian = median(rebasedErrors);
-            if (rebasedMedian + kDbmReleaseRebaseMinImprovementDb < directMedian) {
-                adjustedBins = sourceBins;
-                for (float& bin : adjustedBins) {
-                    const float frac = (m_dbmReleasePreviewNewMaxDbm - bin) / newRange;
-                    bin = m_dbmReleasePreviewOldMaxDbm - frac * oldRange;
-                }
+            DbmRangeTransition::Evaluation evaluation =
+                DbmRangeTransition::evaluate(
+                    sourceBins, m_bins,
+                    m_dbmReleasePreviewOldMinDbm,
+                    m_dbmReleasePreviewOldMaxDbm,
+                    m_dbmReleasePreviewNewMinDbm,
+                    m_dbmReleasePreviewNewMaxDbm,
+                    kDbmReleaseRebaseMinImprovementDb);
+            if (evaluation.useRebasedBins) {
+                adjustedBins = std::move(evaluation.rebasedBins);
                 spectrumBins = &adjustedBins;
-            }
-            if (m_holdFftUpdatesAfterDbmRelease <= 0) {
+            } else if (evaluation.newEncodingObserved) {
                 clearDbmReleaseRebase();
             }
         }
@@ -6968,7 +7079,8 @@ void SpectrumWidget::setKiwiSdrWaterfallActive(bool active)
                                    m_noiseFloorPosition,
                                    false);
     setDssFloorDepthForSource(m_kiwiSdrWaterfallActive,
-                              dssFloorDepth(),
+                              DbmRangeTransition::floorDepthFromOffsetDb(
+                                  m_dssFloorOffsetDb),
                               false);
     saveCurrentWaterfallStreamState();
     // Retained intensity/DSS scrollback follows the visible source. Keep the
@@ -7835,21 +7947,35 @@ void SpectrumWidget::mousePressEvent(QMouseEvent* ev)
                 if (y < DBM_ARROW_H) {
                     const float bottom =
                         clampDbmBottom(m_refLevel - m_dynamicRange);
+                    const float oldRefLevel = m_refLevel;
+                    const bool flex3dActive = is3D && !m_kiwiSdrWaterfallActive;
+                    const DbmRangeTransition::Range oldRequestRange =
+                        DbmRangeTransition::manualRequestRange(
+                            bottom, oldRefLevel, flex3dActive,
+                            peekDssFloorDbm(), oldRefLevel - bottom);
                     const float requestedRef =
                         m_refLevel + ((mx < stripX + DBM_STRIP_W / 2) ? 10.0f : -10.0f);
                     m_dynamicRange =
                         clampDbmRangeForBottom(bottom, requestedRef - bottom);
                     m_refLevel = bottom + m_dynamicRange;
+                    const DbmRangeTransition::Range requestRange =
+                        DbmRangeTransition::manualRequestRange(
+                            bottom, m_refLevel, flex3dActive,
+                            peekDssFloorDbm(), m_dynamicRange);
+                    beginDbmRangeTransition(
+                        oldRequestRange.minDbm, oldRequestRange.maxDbm,
+                        requestRange.minDbm, requestRange.maxDbm);
                     markOverlayDirty();
                     refreshNoiseFloorTarget(true, true);
-                    emit dbmRangeChangeRequested(bottom, m_refLevel);
+                    emit dbmRangeChangeRequested(
+                        requestRange.minDbm, requestRange.maxDbm);
                     ev->accept();
                     return;
                 }
                 if (is3D) {
                     m_draggingDssFloor = true;
                     m_dbmDragStartY = y;
-                    m_dssFloorDragStartDepth = dssFloorDepth();
+                    m_dssFloorDragStartDepth = -m_dssFloorOffsetDb;
                     setSpectrumCursor(Qt::SizeVerCursor);
                     ev->accept();
                     return;
@@ -8680,12 +8806,14 @@ void SpectrumWidget::mouseMoveEvent(QMouseEvent* ev)
     }
 
     if (m_draggingDssFloor) {
-        constexpr int kDssFloorDragRangeDb = 24;
         const int dragHeight = std::max(1, specH);
-        const int dy = m_dbmDragStartY - y;
-        const int deltaDb = static_cast<int>(
-            std::lround((static_cast<double>(dy) / dragHeight) * kDssFloorDragRangeDb));
-        setDssFloorDepth(m_dssFloorDragStartDepth + deltaDb);
+        const float previewDepth = DbmRangeTransition::floorDepthForDrag(
+            m_dssFloorDragStartDepth, m_dbmDragStartY, y, dragHeight);
+        // Keep the pointer path continuous and defer the AppSettings write
+        // until release; the menu's integer slider still resolves to the
+        // nearest dB while the rendered surface follows the exact preview.
+        setDssFloorDepthForSource(
+            m_kiwiSdrWaterfallActive, previewDepth, false);
         setSpectrumCursor(Qt::SizeVerCursor);
         ev->accept();
         return;
@@ -9029,7 +9157,36 @@ void SpectrumWidget::mouseReleaseEvent(QMouseEvent* ev)
     }
     if (m_draggingDssFloor) {
         m_draggingDssFloor = false;
+        setDssFloorDepthForSource(
+            m_kiwiSdrWaterfallActive, -m_dssFloorOffsetDb, true);
         setSpectrumCursor(Qt::CrossCursor);
+
+        if (!m_kiwiSdrWaterfallActive
+            && std::abs((-m_dssFloorOffsetDb) - m_dssFloorDragStartDepth)
+                > kDbmReleasePreviewChangeThresholdDb) {
+            const DbmRangeTransition::Range oldRange{
+                m_refLevel - m_dynamicRange, m_refLevel};
+            float requestedMinDbm = peekDssFloorDbm();
+            float requestedMaxDbm = requestedMinDbm + dssSpanDb();
+            if (clampDbmRange(requestedMinDbm, requestedMaxDbm)) {
+                const DbmRangeTransition::Range requestedRange{
+                    requestedMinDbm, requestedMaxDbm};
+                if (DbmRangeTransition::materiallyDifferent(
+                        oldRange, requestedRange,
+                        kDbmReleasePreviewChangeThresholdDb)) {
+                    beginDbmRangeTransition(
+                        oldRange.minDbm, oldRange.maxDbm,
+                        requestedRange.minDbm, requestedRange.maxDbm);
+                    m_refLevel = requestedRange.maxDbm;
+                    m_dynamicRange =
+                        requestedRange.maxDbm - requestedRange.minDbm;
+                    markOverlayDirty();
+                    refreshNoiseFloorTarget(true, true);
+                    emit dbmRangeDragFinished(
+                        requestedRange.minDbm, requestedRange.maxDbm);
+                }
+            }
+        }
         ev->accept();
         return;
     }
@@ -9047,27 +9204,29 @@ void SpectrumWidget::mouseReleaseEvent(QMouseEvent* ev)
             ev->accept();
             return;
         }
+        const bool flex3dActive =
+            m_spectrumRenderMode == SpectrumRenderMode::Mode3D
+            && !m_kiwiSdrWaterfallActive;
+        const DbmRangeTransition::Range oldRequestRange =
+            DbmRangeTransition::manualRequestRange(
+                oldMinDbm, oldMaxDbm, flex3dActive,
+                peekDssFloorDbm(),
+                oldMaxDbm - oldMinDbm);
+        const DbmRangeTransition::Range requestRange =
+            DbmRangeTransition::manualRequestRange(
+                pendingMinDbm, pendingMaxDbm, flex3dActive,
+                peekDssFloorDbm(),
+                pendingMaxDbm - pendingMinDbm);
         m_refLevel = pendingMaxDbm;
         m_dynamicRange = pendingMaxDbm - pendingMinDbm;
-        m_pendingDbmRangeEcho = true;
-        m_pendingDbmRangeEchoFromAutoFloor = false;
-        m_pendingDbmRangeEchoStartMs = QDateTime::currentMSecsSinceEpoch();
-        m_pendingMinDbm = pendingMinDbm;
-        m_pendingMaxDbm = pendingMaxDbm;
-        m_dbmReleasePreviewOldMinDbm = oldMinDbm;
-        m_dbmReleasePreviewOldMaxDbm = oldMaxDbm;
-        m_dbmReleasePreviewNewMinDbm = m_pendingMinDbm;
-        m_dbmReleasePreviewNewMaxDbm = m_pendingMaxDbm;
-        m_holdFftUpdatesAfterDbmRelease =
-            (std::abs(oldMinDbm - m_pendingMinDbm) > kDbmReleasePreviewChangeThresholdDb
-             || std::abs(oldMaxDbm - m_pendingMaxDbm)
-                 > kDbmReleasePreviewChangeThresholdDb) ? kDbmReleaseHoldFrames : 0;
+        beginDbmRangeTransition(
+            oldRequestRange.minDbm, oldRequestRange.maxDbm,
+            requestRange.minDbm, requestRange.maxDbm);
         m_draggingDbm = false;
         m_draggingDbmRange = false;
         setSpectrumCursor(Qt::CrossCursor);
-        m_resetFftSmoothingOnNextFrame = true;
         refreshNoiseFloorTarget(true, true);
-        emit dbmRangeDragFinished(m_pendingMinDbm, m_pendingMaxDbm);
+        emit dbmRangeDragFinished(requestRange.minDbm, requestRange.maxDbm);
         ev->accept();
         return;
     }
@@ -9636,16 +9795,26 @@ void SpectrumWidget::updateFixedColorBufferSize()
     // its scale from renderTarget()->pixelSize(), not width()×dpr, so the
     // ≤1 px overshoot is invisible.
     const qreal dpr = devicePixelRatioF();
-    QSize devicePx(static_cast<int>(std::ceil(width() * dpr)),
-                   static_cast<int>(std::ceil(height() * dpr)));
+    const QSize devicePx = evenAlignedRhiSize(
+        QSize(static_cast<int>(std::ceil(width() * dpr)),
+              static_cast<int>(std::ceil(height() * dpr))));
     if (devicePx.isEmpty()) {
         return;
     }
-    devicePx.rwidth()  += devicePx.width()  & 1;
-    devicePx.rheight() += devicePx.height() & 1;
     if (fixedColorBufferSize() != devicePx) {
         setFixedColorBufferSize(devicePx);
     }
+}
+
+QSize SpectrumWidget::fullFrameTextureSize() const
+{
+    QSize devicePx = renderTarget() ? renderTarget()->pixelSize() : QSize();
+    if (devicePx.isEmpty()) {
+        const qreal dpr = devicePixelRatioF();
+        devicePx = QSize(static_cast<int>(std::ceil(width() * dpr)),
+                         static_cast<int>(std::ceil(height() * dpr)));
+    }
+    return evenAlignedRhiSize(devicePx.expandedTo(QSize(64, 64)));
 }
 #endif
 
@@ -9913,8 +10082,7 @@ float SpectrumWidget::dssFloorDbm()
             ? m_dssFloorAnchorDbm
             : m_refLevel - m_dynamicRange;
     }
-    floor += m_dssFloorOffsetDb;
-    return std::round(floor * 2.0f) / 2.0f;
+    return std::round(floor * 2.0f) / 2.0f + m_dssFloorOffsetDb;
 }
 
 float SpectrumWidget::peekDssFloorDbm() const
@@ -9959,17 +10127,17 @@ float SpectrumWidget::peekDssFloorDbm() const
             }
         }
     }
-    floor += m_dssFloorOffsetDb;
-    return std::round(floor * 2.0f) / 2.0f;
+    return std::round(floor * 2.0f) / 2.0f + m_dssFloorOffsetDb;
 }
 
 float SpectrumWidget::dssSpanDb() const
 {
     // The dB-per-height scale follows the normal panadapter dBm range, not the
     // 3D Floor depth. The floor control shifts the surface reference; Ctrl-drag
-    // on the dBm strip remains the gesture that changes the scale/span.
-    const float span = m_dynamicRange;
-    return std::clamp(span, 45.0f, 120.0f);
+    // on the dBm strip remains the gesture that changes the scale/span. Keep the
+    // normal 10 dB lower bound so arrows and drags remain responsive at narrow
+    // ranges; the radio-range handoff keeps FFT bins correctly encoded there.
+    return DbmRangeTransition::displaySpanDb(m_dynamicRange);
 }
 
 const QImage& SpectrumWidget::buildDssImage(const QSize& px,
@@ -10317,8 +10485,17 @@ bool SpectrumWidget::initWaterfallPipeline()
         return false;
     }
 
-    const int textureWidth = qMax(contentWidth(), 64);
-    const int textureHeight = qMax(m_waterfall.height(), 64);
+    // A top-level reparent preserves the CPU waterfall until the new window's
+    // resize settles. Size the replacement texture for that retained image,
+    // not the new (still provisional) content width — uploading the old wide
+    // image into a smaller floating-window texture is rejected by QRhi and can
+    // crash the D3D11 backend (#4319). The normal render path resizes both once
+    // the new geometry is authoritative.
+    const QSize waterfallSize = m_waterfall.isNull()
+        ? QSize(qMax(contentWidth(), 64), 64)
+        : m_waterfall.size().expandedTo(QSize(64, 64));
+    const int textureWidth = waterfallSize.width();
+    const int textureHeight = waterfallSize.height();
     std::unique_ptr<QRhiBuffer> vbo(r->newBuffer(
         QRhiBuffer::Immutable, QRhiBuffer::VertexBuffer,
         sizeof(kQuadData)));
@@ -10505,11 +10682,10 @@ void SpectrumWidget::initOverlayPipeline()
     m_ovVbo = r->newBuffer(QRhiBuffer::Immutable, QRhiBuffer::VertexBuffer, sizeof(kQuadData));
     m_ovVbo->create();
 
-    int w = qMax(width(), 64);
-    int h = qMax(height(), 64);
     const qreal dpr = devicePixelRatioF();
-    const int pw = static_cast<int>(w * dpr);
-    const int ph = static_cast<int>(h * dpr);
+    const QSize fullFramePx = fullFrameTextureSize();
+    const int pw = fullFramePx.width();
+    const int ph = fullFramePx.height();
     m_ovGpuTex = r->newTexture(QRhiTexture::RGBA8, QSize(pw, ph));
     m_ovGpuTex->create();
 
@@ -11303,8 +11479,13 @@ void SpectrumWidget::renderGpuFrame(QRhiCommandBuffer* cb,
     {
         // Resize overlay images if needed
         const qreal dpr = devicePixelRatioF();
-        const int pw = static_cast<int>(w * dpr);
-        const int ph = static_cast<int>(h * dpr);
+        // Match the pinned QRhi color buffer exactly. The old width*dpr
+        // truncation produced 1919-pixel RGBA textures at the fractional DPR
+        // in #4319; pop-out recreated them and opening a slice uploaded into
+        // them, reaching the same old-Intel D3D11 crash class as #4091.
+        const QSize fullFramePx = fullFrameTextureSize();
+        const int pw = fullFramePx.width();
+        const int ph = fullFramePx.height();
         if (!resizePreview && m_overlayStatic.size() != QSize(pw, ph)) {
             m_overlayStatic = QImage(pw, ph, QImage::Format_RGBA8888_Premultiplied);
             m_overlayStatic.setDevicePixelRatio(dpr);

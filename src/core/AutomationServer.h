@@ -7,6 +7,7 @@
 #include <QElapsedTimer>
 #include <QMutex>
 #include <QJsonObject>
+#include <QPoint>
 #include <QString>
 
 #ifdef HAVE_WEBSOCKETS
@@ -19,6 +20,7 @@ class QWebSocket;
 #include <vector>
 
 #include "IConnectionAutomation.h"  // complete type: inline setter calls asQObject()
+#include "MemoryTelemetry.h"
 
 class QLocalServer;
 class QLocalSocket;
@@ -31,6 +33,7 @@ class RadioModel;
 class SliceModel;
 class AudioEngine;
 class QsoRecorder;
+class AetherClockModel;
 
 // In-app, agent-first automation bridge (issue #3646, Phases 0-1).
 //
@@ -162,6 +165,14 @@ class QsoRecorder;
 //   drag <target> <dx> <dy>        -> synthesize press→move→release so resize
 //                                     grips / slider handles are provable end-to-
 //                                     end. `mouse` is an alias.
+//   dragAt <target> <x> <y> <dx> <dy> [modifiers]
+//                                  -> drag from a target-local point, optionally
+//                                     with control/meta/shift/alt held. This
+//                                     reaches modifier-only custom-widget paths.
+//   gesture begin <target> [x y]   -> hold a real left-button press open across
+//   gesture move <dx> <dy>            requests on the SAME client connection;
+//   gesture end [dx dy]               end/cancel/disconnect/error/timeout always
+//   gesture cancel|status             release it. Enables delayed-event proof.
 //   showMenu <target>              -> pop a QToolButton/QPushButton drop-down,
 //                                     posted onto the GUI loop with the window
 //                                     raised (crash-safe on backgrounded macOS).
@@ -237,6 +248,9 @@ public:
     // "no radio model" rather than crashing).
     void setRadioModel(RadioModel* model) { m_radioModel = model; }
     void setAudioEngine(AudioEngine* audio) { m_audioEngine = audio; }
+    // AetherClock model handle for "get clock"; may be null (reports
+    // "no clock model available" until the applet wires it).
+    void setClockModel(AetherClockModel* model);  // out-of-line: QPointer needs the complete type
     // QSO recorder handle for the record() verb (start/stop/status/path).
     void setQsoRecorder(QsoRecorder* rec) { m_qsoRecorder = rec; }
     // Real connection hook for the connect/disconnect/dialog verbs. The bridge
@@ -277,6 +291,15 @@ public:
     void setTuneHandler(std::function<QJsonObject(double, int)> handler)
     {
         m_tuneHandler = std::move(handler);
+    }
+    void setTargetTuneHandler(std::function<QJsonObject(double)> handler)
+    {
+        m_targetTuneHandler = std::move(handler);
+    }
+    void setMemoryActivateHandler(
+        std::function<QJsonObject(int, const QString&)> handler)
+    {
+        m_memoryActivateHandler = std::move(handler);
     }
     void setReceiveSyncSnapshotHandler(std::function<QJsonObject()> handler)
     {
@@ -373,6 +396,19 @@ private:
     // press → move → release gesture so resize grips and slider handles are
     // provable end-to-end, not just via seed + read-back. (#3646 fidelity)
     QJsonObject doDrag(const QString& target, const QString& value) const;
+    QJsonObject doDragAt(const QString& target, const QString& value) const;
+    // Phaseful pointer gesture (#4353). The owning QLocalSocket stays connected
+    // between begin/move/end so unrelated bridge clients and queued model/radio
+    // events can interleave while a slider is genuinely down. A single global
+    // owner avoids contradictory synthetic left-button states. Every terminal
+    // and error path calls cancelGesture(), which sends the release before
+    // forgetting the state.
+    QJsonObject doGesture(const QString& action, const QString& target,
+                          const QString& value, QLocalSocket* sock);
+    void cancelGesture(QLocalSocket* owner, const QString& reason);
+    QJsonObject pointerSafetyError(const QWidget* widget,
+                                   const QString& target,
+                                   const QString& verb) const;
     // hover <target> [leave]: synthesize pointer hover over a widget so
     // hover-driven UI (e.g. the HGauge mouse-over value readout on the TX
     // SWR/power/ALC meters) is provable end-to-end. Bare form sends a
@@ -471,6 +507,15 @@ private:
     //                     waterfall the client view had already purged.
     //   streams reset   — clear the Layer-A orphan tally to re-baseline.
     QJsonObject doStreams(const QString& action);
+    // Cross-platform process + subsystem memory profiler (the `memprofile`
+    // verb — distinct from the `memory` frequency-recall verb). `start` samples
+    // on a bounded main-thread timer; `report`/`stop` return deltas, slopes, fit
+    // confidence, object-class growth, and raw samples on request.
+    QJsonObject doMemoryProfile(const QString& action, const QString& value);
+    QJsonObject memorySnapshot() const;
+    // Takes one snapshot, appends it to the bounded series, and returns it so
+    // callers that also need to return the snapshot don't take a second one.
+    QJsonObject recordMemorySample();
     QJsonObject doTci(const QString& action, const QString& value);
     QJsonObject doAudioCapture(const QString& action,
                                const QString& arg,
@@ -510,6 +555,8 @@ private:
     // hemisphere/minutes format and 8000-series decimal-degree format.
     QJsonObject doGps(const QString& action, const QString& format);
     QJsonObject doTune(const QString& value, const QString& id);
+    QJsonObject doTargetTune(const QString& value);
+    QJsonObject doMemory(const QString& action, const QString& arg);
     // Semantic transmitter keying (#3646 fidelity): `key ptt on|off` / `key mox`
     // route to RadioModel::setTransmit — the exact calls the space-bar PTT filter
     // and the mox_toggle shortcut make, but reachable headlessly. Keying is gated
@@ -542,6 +589,9 @@ private:
     // for actions with no key sequence and no menu entry (Band Zoom, Segment
     // Zoom, …). TX-keying ids stay behind AETHER_AUTOMATION_ALLOW_TX. (#4057)
     QJsonObject doShortcut(const QString& id) const;
+    // Inject a learned VFO Tune Knob MIDI CC value through the controller
+    // decoder. Automation-only, RX-only, and never persists a binding.
+    QJsonObject doMidi(const QString& action, const QString& value) const;
     // Resolve the top-level window a window-scoped verb (resize/window) acts on:
     // the target's window() if given, else the QMainWindow (or first visible real
     // top-level). Shared by doResize and doWindow.
@@ -572,9 +622,24 @@ private:
     QString       m_discoveryEntry;   // this instance's <pid>.json in m_discoveryDir
     QString       m_label;            // AETHER_AUTOMATION_LABEL (human instance tag)
     QHash<QLocalSocket*, QByteArray> m_buffers;  // per-client read buffer
+    struct PointerGesture {
+        QPointer<QLocalSocket> owner;
+        QPointer<QWidget> widget;
+        QString target;
+        QPoint startLocal;
+        QPoint globalStart;
+        QPoint offset;
+    };
+    PointerGesture m_pointerGesture;
+    QTimer* m_pointerGestureTimer{nullptr};
+    // Tool-call round trips can take several seconds each in an agent host.
+    // One minute leaves room for an independent request plus observation while
+    // still bounding an abandoned synthetic press.
+    static constexpr int kPointerGestureLeaseMs = 60000;
     QPointer<RadioModel> m_radioModel;           // for get(); may be null
     QPointer<AudioEngine> m_audioEngine;          // for get audio; may be null
     QPointer<QsoRecorder> m_qsoRecorder;          // for record(); may be null
+    QPointer<AetherClockModel> m_clockModel;      // for get clock; may be null
     IConnectionAutomation* m_connection = nullptr;  // connect/disconnect verbs
     QPointer<QObject> m_connectionGuard;            // auto-nulls when the impl is destroyed
     // Returns the connection hook only while its implementor is alive, so every
@@ -592,6 +657,8 @@ private:
     // linked peer slice id for a snapshot, or -1 (no link / no GUI query).
     int sliceLinkPeerOf(const SliceModel* s) const;
     std::function<QJsonObject(double, int)> m_tuneHandler;
+    std::function<QJsonObject(double)> m_targetTuneHandler;
+    std::function<QJsonObject(int, const QString&)> m_memoryActivateHandler;
     std::function<QJsonObject()> m_receiveSyncSnapshotHandler;
     std::function<QJsonObject()> m_kiwiSdrSnapshotHandler;
     std::function<QJsonObject()> m_txTimerSnapshotHandler;
@@ -660,6 +727,11 @@ private:
         bool complete{false};
     };
     std::vector<std::shared_ptr<ConnectWait>> m_connectWaits;
+
+    QTimer* m_memoryTimer{nullptr};
+    QElapsedTimer m_memoryClock;
+    MemoryTelemetrySeries m_memorySeries;
+    qint64 m_memoryLastSampleMs{-1};
 };
 
 } // namespace AetherSDR

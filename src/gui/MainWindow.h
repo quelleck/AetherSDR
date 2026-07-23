@@ -95,8 +95,12 @@ class QSystemTrayIcon;
 
 namespace AetherSDR {
 
+class AetherClockApplet;
+class AetherClockEngine;
+class AetherClockModel;
 class AutomationServer;
 class ConnectionPanel;
+class ContributeDialog;
 class TitleBar;
 class KiwiSdrManager;
 class SpectrumWidget;
@@ -129,6 +133,9 @@ class CallsignLookupDialog;
 class Ax25HfPacketDecodeDialog;
 class PskReporterMapDialog;
 class GpsLocationDialog;
+#ifdef AETHER_ASR_ENABLED
+class CopyAssistController;
+#endif
 class FlexControlDialog;
 class MidiMappingDialog;
 #ifdef HAVE_HIDAPI
@@ -209,10 +216,17 @@ public:
     // actions registered keysTx (the caller decides policy; the registration
     // site declares the data). Returns a ShortcutFire* code.
     Q_INVOKABLE int fireShortcutAction(const QString& id, bool allowTx);
+    // Inject one learned VFO-knob CC value through MidiControlManager for
+    // automation proof. Returns 0 on acceptance, 1 if MIDI is unavailable,
+    // and 2 for an out-of-range MIDI value.
+    Q_INVOKABLE int injectMidiVfoCcForAutomation(int value);
     QJsonObject automationSetSliceReceiveSource(const QString& arg);
     QJsonObject automationSetCenterLock(int sliceId, bool enabled);
     QJsonObject automationSetSliceLink(int aId, int bId, bool on);  // MainWindow_Wiring.cpp
     QJsonObject automationTune(double mhz, int sliceId = -1);
+    QJsonObject automationTargetTune(double mhz);
+    QJsonObject automationActivateMemory(int memoryIndex,
+                                         const QString& preferredPanId);
     QJsonObject automationReceiveSyncSnapshot() const;
     QJsonObject automationKiwiSdrSnapshot() const;
     // Status-bar TX-timer state for the bridge `get txtimer` verb.
@@ -237,6 +251,12 @@ public:
     // Persist the observe-only opt-in and push it live (Radio Setup → Network).
     // When set, the bridge refuses every mutating verb (#4188 area 6).
     void setAutomationReadOnly(bool readOnly);
+
+signals:
+    // Synchronous per-pan preflight for every radio-authoritative band-stack
+    // restore. wirePanadapter() owns the pending dBm handshake state, while the
+    // restore can originate in several MainWindow translation units.
+    void bandStackRestoreStarting(const QString& panId);
 
 protected:
     void showEvent(QShowEvent* event) override;
@@ -612,6 +632,9 @@ private:
     void showNetworkDiagnosticsDialog();
     void showAgcCalibrationDialog(int sliceId);
     void showAx25HfPacketDecodeDialog();
+#ifdef AETHER_ASR_ENABLED
+    void showCopyAssist();
+#endif
     void scheduleDigitalVoiceAutoStart();
     void stopDigitalVoiceService(bool waitForExit);
     void showPskReporterMapDialog();
@@ -1023,10 +1046,16 @@ private:
     NetReminderBanner* m_netReminderBanner{nullptr};
     QSystemTrayIcon* m_trayIcon{nullptr};
     QPointer<Ax25HfPacketDecodeDialog> m_ax25HfPacketDecodeDialog;
+#ifdef AETHER_ASR_ENABLED
+    QPointer<CopyAssistController> m_copyAssistController;
+    QPointer<PanadapterApplet> m_copyAssistApplet;
+    QMetaObject::Connection m_copyAssistFreqConn; // active-slice retune → clear decode
+#endif
     QPointer<PskReporterMapDialog> m_pskReporterMapDialog;
     QPointer<GpsLocationDialog> m_gpsLocationDialog;
     QPointer<FlexControlDialog> m_flexControlDialog;
     QPointer<WhatsNewDialog> m_whatsNewDialog;
+    QPointer<ContributeDialog> m_contributeDialog;
     QPointer<AetherDspDialog> m_dspDialog;
 #ifdef HAVE_MQTT
     QPointer<MqttSettingsDialog> m_mqttSettingsDialog;
@@ -1069,6 +1098,9 @@ private:
     QLabel* m_addPanLabel{nullptr};
     QLabel* m_tnfIndicator{nullptr};
     QLabel* m_cwxIndicator{nullptr};
+#ifdef AETHER_ASR_ENABLED
+    QLabel* m_asrIndicator{nullptr};  // status-bar ASR (Copy Assist) toggle
+#endif
     CwxPanel* m_cwxPanel{nullptr};
     DvkPanel* m_dvkPanel{nullptr};
     QLabel* m_dvkIndicator{nullptr};
@@ -1265,6 +1297,12 @@ private:
     QString m_panadapterConnectionAnimationLabel;
     ShortcutManager m_shortcutManager;
     UpdateChecker* m_updateChecker{nullptr};
+
+// AetherClock (MainWindow_AetherClock.cpp)
+    AetherClockEngine* m_clockEngine{nullptr};
+    AetherClockModel* m_clockModel{nullptr};
+    QMetaObject::Connection m_clockDaxConn;  // daxAudioReady feed — live only while the engine runs
+    void setupAetherClock();
 
 #ifdef HAVE_RADE
     RADEEngine* m_radeEngine{nullptr};
