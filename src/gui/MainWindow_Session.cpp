@@ -406,7 +406,7 @@ void MainWindow::wireRadioModel()
     // live session either).
     connect(&m_radioModel, &RadioModel::connectionStateChanged,
             this, [this](bool connected) {
-        dissolveSliceLink(connected ? "radio connected" : "radio disconnected");
+        dissolveAllSliceLinks(connected ? "radio connected" : "radio disconnected");
     });
     connect(&m_radioModel, &RadioModel::connectionError,
             this, &MainWindow::onConnectionError);
@@ -463,6 +463,17 @@ void MainWindow::wireRadioModel()
             this, &MainWindow::onSliceAdded);
     connect(&m_radioModel, &RadioModel::sliceRemoved,
             this, &MainWindow::onSliceRemoved);
+    connect(&m_radioModel, &RadioModel::panBandAboutToDispatch,
+            this, &MainWindow::prepareKiwiSdrBandRecallForPan);
+    connect(&m_radioModel, &RadioModel::panBandDispatchFailed,
+            this, [this](const QString& panId) {
+        // The band write never reached the wire, so re-arm the mute handoff
+        // (restores the KiwiSDR suppression the prepare step lifted). The rebind
+        // marker is owned by noteBandRecallForPan and self-expires via its own
+        // generation-guarded grace timer — don't clear it here or a concurrent
+        // recall's #4158/Center Lock window could be torn down early.
+        finishPreparedKiwiSdrBandRecallForPan(panId);
+    });
     // Re-bind a KiwiSDR replacement across a band-stack slice recreation (#4158).
     // A band recall DROPS then RE-CREATES the slice (same id, new band). The
     // tracker re-binds only when a rebind is pending for this id AND this pan
@@ -477,7 +488,10 @@ void MainWindow::wireRadioModel()
         if (profileId.isEmpty()) {
             return;
         }
-        setKiwiSdrVirtualAntennaForSlice(s->sliceId(), profileId);
+        // Automatic recreation re-bind: selectSlice=false so a band recall on a
+        // Kiwi slice that lives on a non-active pan can't steal the active slice.
+        setKiwiSdrVirtualAntennaForSliceInternal(s->sliceId(), profileId,
+                                                 /*selectSlice=*/false);
     });
     connect(&m_radioModel, &RadioModel::memoryChanged,
             this, &MainWindow::syncMemorySpot);
@@ -1675,6 +1689,7 @@ bool MainWindow::startAutomationBridge(const QString& sockName)
     m_automation->setRadioModel(&radioModel());  // for the get() verb
     m_automation->setAudioEngine(audioEngine());
     m_automation->setQsoRecorder(qsoRecorder());  // for the record() verb
+    m_automation->setClockModel(m_clockModel);  // for the `get clock` verb
     m_automation->setConnectionDialogHost(this);
     m_automation->setConnectionAutomation(
         findChild<AetherSDR::ConnectionPanel*>(QStringLiteral("connectionPanel")));
@@ -1726,9 +1741,12 @@ bool MainWindow::startAutomationBridge(const QString& sockName)
         // AETHER_AUTOMATION_ALLOW_TX into m_txAllowed and would otherwise
         // clobber a pre-start value. Fold in the persisted operator opt-in so
         // a GUI enable survives restart; setTxAllowed arms the watchdog.
+        const bool txPinnedOff =
+            qEnvironmentVariableIsSet("AETHER_AUTOMATION_NO_TX");
         guard->setTxAllowed(
-            qEnvironmentVariableIsSet("AETHER_AUTOMATION_ALLOW_TX")
-            || AutomationBridgeSettings::txAllowed());
+            !txPinnedOff
+            && (qEnvironmentVariableIsSet("AETHER_AUTOMATION_ALLOW_TX")
+                || AutomationBridgeSettings::txAllowed()));
         // Observe-only gate (#4188) — apply the persisted operator opt-in after
         // start() so the bridge comes up read-only if the box is checked. An env
         // override lets headless/CI pin the bridge observe-only regardless.
@@ -1760,6 +1778,11 @@ void MainWindow::setAutomationBridgeToken(const QString& token)
 
 void MainWindow::setAutomationTxAllowed(bool allowed)
 {
+    if (allowed && qEnvironmentVariableIsSet("AETHER_AUTOMATION_NO_TX")) {
+        qWarning().noquote()
+            << "Ignoring TX-automation enable while AETHER_AUTOMATION_NO_TX pins it off";
+        return;
+    }
     // Persist the operator opt-in (nested config) so it survives restart.
     AutomationBridgeSettings::setTxAllowed(allowed);
     // Push live so toggling takes effect on a running bridge immediately —
