@@ -55,6 +55,17 @@ struct LinkSim {
         return d;
     }
 
+    // Mirrors SliceModel's signal order for a local request:
+    // frequencyChanged first, then frequencyCommandIssued arms the origin's
+    // radio-echo expectation.
+    Decision command(int changedId, std::int64_t hz, std::int64_t nowMs,
+                     bool peerLocked = false)
+    {
+        const Decision d = feed(changedId, hz, nowMs, peerLocked);
+        pending[changedId].record(hz, nowMs);
+        return d;
+    }
+
     // The adapter's trailing settle check: when the pair is diverged, the
     // origin's current value re-enters the classified path.
     Decision settleCheck(std::int64_t nowMs)
@@ -101,6 +112,26 @@ int main()
                      "the whole echo train is classified as echoes");
         ok &= expect(sim.pending[kB].count == 0,
                      "in-order echoes drain the ring completely");
+    }
+
+    // ── Regression: the origin's own stale radio echoes must not be treated
+    //    as fresh intent and replayed backwards onto the peer. Each genuine
+    //    origin move arms its own echo ring as well as the peer's. ──────────
+    {
+        LinkSim sim;
+        sim.command(kA, 14'074'000, 1000);
+        sim.command(kA, 14'074'100, 1010);
+        ok &= expect(sim.pending[kA].count == 2
+                         && sim.pending[kB].count == 2,
+                     "spin arms echo expectations on origin and peer");
+        const Decision originEcho1 = sim.feed(kA, 14'074'000, 1100);
+        ok &= expect(originEcho1.action == Action::IgnoreEcho
+                         && sim.modelHz[kB] == 14'074'100,
+                     "stale origin echo cannot retune the peer backwards");
+        const Decision originEcho2 = sim.feed(kA, 14'074'100, 1110);
+        ok &= expect(originEcho2.action == Action::IgnoreEcho
+                         && sim.modelHz[kB] == 14'074'100,
+                     "origin echo train drains without peer writes");
     }
 
     // ── In-order consumption with duplicate values: v, w, v echoes must
