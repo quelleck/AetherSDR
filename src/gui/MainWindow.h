@@ -1381,10 +1381,10 @@ private:
     void recenterCenterLockForPan(const QString& panId);
     void recenterCenterLocks();
 
-    // Slice Link — cross-panadapter bidirectional VFO link: two owned slices
-    // kept on frequency by propagating each member's frequencyChanged to the
-    // other through applyTuneRequest ("slice-link" source), so lock/SWR
-    // guards, reveal/pan-follow, and Kiwi tracking all apply for free.
+    // Slice Link — independent cross-panadapter bidirectional VFO pairs. Each
+    // owned slice may belong to at most one pair. Frequency changes propagate
+    // through applyTuneRequest ("slice-link" source), so lock/SWR guards,
+    // reveal/pan-follow, and Kiwi tracking all apply for free.
     // Decision logic is pure (src/models/SliceLinkPolicy.h). Session-only
     // state — slice ids are radio-assigned and ephemeral, never persisted.
     struct SliceLinkState {
@@ -1397,19 +1397,23 @@ private:
         AetherSDR::SliceLinkPolicy::PendingWrites pendingB;  // echo expectations for B
         bool suspendedByLock{false};
         QVector<QMetaObject::Connection> connections;
+        quint64 settleGeneration{0};
         bool active() const { return aId >= 0 && bId >= 0; }
     };
-    SliceLinkState m_sliceLink;
+    QVector<SliceLinkState> m_sliceLinks;
     bool m_applyingSliceLink{false};
-    // Monotonic across engage/dissolve so a pending settle timer from a
-    // dissolved link can never act on a fresh one.
-    quint32 m_sliceLinkSettleGeneration{0};
+    // Monotonic across every pair lifecycle so a pending settle timer from a
+    // dissolved pair can never act on a newly-created pair with the same ids.
+    quint64 m_sliceLinkGeneration{0};
+    SliceLinkState* sliceLinkFor(int sliceId);                    // MainWindow_Wiring.cpp
+    const SliceLinkState* sliceLinkFor(int sliceId) const;        // MainWindow_Wiring.cpp
     void engageSliceLink(int aId, int bId);                       // MainWindow_Wiring.cpp
-    void dissolveSliceLink(const char* reason);                   // MainWindow_Wiring.cpp
+    void dissolveSliceLink(int aId, int bId, const char* reason); // MainWindow_Wiring.cpp
+    void dissolveAllSliceLinks(const char* reason);               // MainWindow_Wiring.cpp
     void onSliceLinkFrequencyChanged(SliceModel* s, double mhz);  // MainWindow_Wiring.cpp
     void onSliceLinkFrequencyCommandIssued(SliceModel* s, double mhz);  // MainWindow_Wiring.cpp
     void onSliceLinkLockedChanged(SliceModel* s, bool locked);    // MainWindow_Wiring.cpp
-    void scheduleSliceLinkSettleCheck();                          // MainWindow_Wiring.cpp
+    void scheduleSliceLinkSettleCheck(int sliceId);               // MainWindow_Wiring.cpp
     int sliceLinkPeerOf(int sliceId) const;                       // MainWindow_Wiring.cpp
     void refreshSliceLinkUi();                                    // MainWindow_Wiring.cpp
 

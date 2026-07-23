@@ -406,7 +406,7 @@ void MainWindow::wireRadioModel()
     // live session either).
     connect(&m_radioModel, &RadioModel::connectionStateChanged,
             this, [this](bool connected) {
-        dissolveSliceLink(connected ? "radio connected" : "radio disconnected");
+        dissolveAllSliceLinks(connected ? "radio connected" : "radio disconnected");
     });
     connect(&m_radioModel, &RadioModel::connectionError,
             this, &MainWindow::onConnectionError);

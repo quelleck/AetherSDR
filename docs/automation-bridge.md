@@ -1081,7 +1081,7 @@ re-poll `get slices`.
 | `mode` | `<name>` e.g. `DSTR` | set the active slice mode through `SliceModel`; validated against the radio-advertised mode list |
 | `diversity` | `<sliceId> <on\|off>` | enable or disable diversity through the slice model; re-poll `get slices` for parent/child state |
 | `centerlock` | `<sliceId> <on\|off>` | enable or disable Center Lock for that exact slice through the same per-pan path as the context menu; an explicit id permits testing either diversity member |
-| `link` | `<sliceIdA> <sliceIdB> <on\|off>` | engage or dissolve the cross-panadapter Slice Link (bidirectional VFO link) through the same MainWindow handler as the context menu; refused for foreign, diversity, or identical slices — assert the pair via the `linkedTo` snapshot field |
+| `link` | `<sliceIdA> <sliceIdB> <on\|off>` | engage or dissolve one cross-panadapter Slice Link pair through the same MainWindow handler as the context menu; multiple independent pairs are supported, but each owned non-diversity slice may belong to only one pair — assert each pair via the reciprocal `linkedTo` snapshot fields |
 | `txant` / `rxant` | `<port>` e.g. `ANT2` | set the TX/RX antenna of the TX (else active) slice; validated against the slice's antenna list — establish the dummy-load antenna before any TX-safety gate, then read back with `get slice tx txAntenna` |
 | `rxsource` (alias `source`) | see below | select the slice's receive source (Flex / virtual-Kiwi) |
 | `fixture` | `<sliceId> [A-H]` | disconnected-only test fixture: synthesize an owned slice through the normal slice-status path, optionally with a single radio `index_letter`, so `dumpTree` can assert UI without a radio |
