@@ -362,6 +362,11 @@ private:
                                                 TuneIntent intent, const char* source,
                                                 double leftFlagEdgeOffsetMhz = 0.0,
                                                 double rightFlagEdgeOffsetMhz = 0.0);
+    // Write step for revealFrequencyIfNeeded's recenters: flex-display pans
+    // write through radio+model, kiwi-display pans recenter the widget alone
+    // (their radio geometry is frozen) — see PanRecenterPolicy.h.
+    void applyTuneCenteringWrite(PanadapterModel* pan, SpectrumWidget* sw,
+                                 double newCenterMhz);
     void logTunePolicyDecision(const char* source, TuneIntent intent,
                                double oldFreqMhz, double newFreqMhz,
                                const TuneCenteringResult& result) const;
