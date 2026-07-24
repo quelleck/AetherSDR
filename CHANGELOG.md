@@ -8,6 +8,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Radio, display & slice fidelity
+
+- Keep a KiwiSDR-sourced panadapter's zoom while dragging its slice (tune-driven
+  recenters no longer write the frozen radio geometry over the client-owned
+  view), and re-sync the radio pan to the operator's view when the pan leaves
+  Kiwi display. (#4424 — @quelleck)
+
 ### Operator workflow
 
 - Add Slice Link: right-click a panadapter to link two slices so tuning
