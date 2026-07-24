@@ -1289,6 +1289,46 @@ void MainWindow::syncKiwiSdrDiversityEscControls()
     }
 }
 
+// Leaving kiwi display (#4081 toggle-back, or the virtual antenna cleared):
+// while the kiwi source owned the pan's display, tune-driven recenters stayed
+// widget-local and the radio pan kept its kiwi-assignment geometry
+// (PanRecenterPolicy). Handing the display back to the Flex source with the
+// widget still on its kiwi-era view would render radio tiles for a span the
+// operator isn't looking at — zero overlap draws a blank spectrum and bakes
+// black rows into waterfall history (#4142). Ask the radio to adopt the
+// widget's current view; the status echo reconciles anything the radio
+// clamps differently (Principle II).
+void MainWindow::reconcileFlexPanGeometryAfterKiwiDisplay(
+    const QString& panId, SpectrumWidget* spectrum)
+{
+    if (!spectrum || !m_radioModel.isConnected()) {
+        return;
+    }
+    // Never fight a live gesture — its own write path owns the view until
+    // release, and a mid-animation pan-follow center is not operator intent.
+    if (m_sliceDragInProgress || spectrum->panDragActive()
+        || spectrum->frequencyRangeGestureActive()) {
+        return;
+    }
+    const double widgetBwMhz = spectrum->bandwidthMhz();
+    if (widgetBwMhz <= 0.0) {
+        return;
+    }
+    // The kiwi display allows spans beyond the Flex pan's limits; clamp back
+    // to what the radio can actually take, and keep the low edge >= 0 Hz.
+    const double bwMhz = std::clamp(widgetBwMhz,
+                                    m_radioModel.minPanBandwidthMhz(),
+                                    m_radioModel.maxPanBandwidthMhz());
+    const double centerMhz = std::max(spectrum->centerMhz(), bwMhz / 2.0);
+    // Effective (pending-else-model) compare so a deferred reconcile already
+    // in flight is not re-issued on every UI sync (#4142).
+    if (qFuzzyCompare(m_radioModel.effectivePanCenterMhz(panId), centerMhz)
+        && qFuzzyCompare(m_radioModel.effectivePanBandwidthMhz(panId), bwMhz)) {
+        return;
+    }
+    m_radioModel.requestPanCenter(panId, centerMhz, bwMhz);
+}
+
 void MainWindow::syncKiwiSdrPanadapterUiState(const QString& panId)
 {
     if (!m_panStack || panId.isEmpty()) {
@@ -1325,6 +1365,11 @@ void MainWindow::syncKiwiSdrPanadapterUiState(const QString& panId)
             spectrum->dssGain(), spectrum->fftLineColor());
     };
 
+    // Capture the pre-sync display source: leaving kiwi display is the
+    // moment the radio pan (frozen at kiwi-assignment geometry while
+    // recenters stayed widget-local — PanRecenterPolicy) must be brought
+    // back to the view the operator is actually looking at.
+    const bool wasKiwiDisplay = spectrum->kiwiSdrDisplaySourceKiwi();
     spectrum->setKiwiSdrDisplaySourceKiwi(displayKiwi);
     spectrum->setKiwiSdrDisplaySourceControlVisible(hasKiwiSource);
 
@@ -1332,6 +1377,9 @@ void MainWindow::syncKiwiSdrPanadapterUiState(const QString& panId)
         m_kiwiSdrFlexDisplayPans.remove(panId);
         spectrum->setBandwidthLimits(m_radioModel.minPanBandwidthMhz(),
                                      m_radioModel.maxPanBandwidthMhz());
+        if (wasKiwiDisplay) {
+            reconcileFlexPanGeometryAfterKiwiDisplay(panId, spectrum);
+        }
         const QString overlayProfileId = kiwiSdrOverlayProfileForPan(panId);
         if (!overlayProfileId.isEmpty()) {
             spectrum->setKiwiSdrConnectionOverlay(
@@ -1354,6 +1402,9 @@ void MainWindow::syncKiwiSdrPanadapterUiState(const QString& panId)
     if (!displayKiwi) {
         spectrum->setBandwidthLimits(m_radioModel.minPanBandwidthMhz(),
                                      m_radioModel.maxPanBandwidthMhz());
+        if (wasKiwiDisplay) {
+            reconcileFlexPanGeometryAfterKiwiDisplay(panId, spectrum);
+        }
         spectrum->setKiwiSdrConnectionOverlay(false);
         setKiwiSdrWaterfallActive(m_radioModel, panId, spectrum, false);
         spectrum->setKiwiSdrWaterfallAvailable(

@@ -8,9 +8,10 @@
 // bandwidth stale the moment the operator zooms — so a center-ONLY write
 // through RadioModel::requestPanCenter() re-broadcasts the frozen bandwidth
 // via PanadapterModel::infoChanged, and the widget visibly snaps back to the
-// assignment-time span mid-gesture. Every tune-driven recenter (slice-drag
-// edge pan, reveal/pan-follow, center-on-slice) must therefore pick its write
-// mode through this policy instead of writing through unconditionally:
+// assignment-time span mid-gesture. The tune-driven recenter paths (slice-drag
+// edge pan and reveal/pan-follow) pick their write mode through
+// recenterWrite(); centerActiveSliceInPanadapter keeps its own
+// forceRadioCenter gating and consumes only the bandwidth-pairing rule:
 //
 //  - Flex-display pan → write through the radio and model; the widget
 //    repaints via the optimistic model write (the pre-existing path).
@@ -22,9 +23,15 @@
 //
 // Radio-side recenters that exist for the radio's sake — the WFM DAX-IQ
 // center (the NCO rides the pan center) and the ATU pre-tune save/restore
-// (center+width written as a pair) — are NOT view recenters and stay outside
-// this policy. Precedent: snapCenterLockForSlice() has applied exactly this
-// split since #4116.
+// (center+width written as a pair) — must keep reaching the radio and stay
+// outside this policy. Their model writes can still stomp a kiwi-display
+// widget's zoom through the infoChanged delivery (as can any center-only
+// model write, e.g. the automation bridge's pan-center verb); closing that
+// residual class means gating the display-side delivery, a separate concern
+// from these tune-path write modes. Precedent for the split applied here:
+// snapCenterLockForSlice() since #4116. When a pan LEAVES kiwi display, the
+// frozen radio geometry is reconciled one-shot to the widget's view —
+// reconcileFlexPanGeometryAfterKiwiDisplay().
 
 namespace AetherSDR::PanRecenterPolicy {
 

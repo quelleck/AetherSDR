@@ -4640,11 +4640,13 @@ void MainWindow::applyTuneCenteringWrite(PanadapterModel* pan,
         break;
     case PanRecenterPolicy::Write::WidgetLocal:
         if (sw) {
-            sw->setFrequencyRange(
-                newCenterMhz,
-                PanRecenterPolicy::recenterBandwidthMhz(
-                    /*kiwiDisplayActive=*/true, sw->bandwidthMhz(),
-                    pan->bandwidthMhz()));
+            const double bwMhz = PanRecenterPolicy::recenterBandwidthMhz(
+                /*kiwiDisplayActive=*/true, sw->bandwidthMhz(),
+                pan->bandwidthMhz());
+            // Low edge stays >= 0 Hz, matching every other center writer
+            // (snapCenterLockForSlice's kiwi branch, the gesture paths, and
+            // dispatchPanCenterBandwidth on the flex side).
+            sw->setFrequencyRange(std::max(newCenterMhz, bwMhz / 2.0), bwMhz);
         }
         break;
     case PanRecenterPolicy::Write::None:

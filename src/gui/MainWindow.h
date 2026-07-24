@@ -504,6 +504,11 @@ private:
                                         const QString& profileId);
     void syncKiwiSdrDiversityEscControls();
     void syncKiwiSdrPanadapterUiState(const QString& panId);
+    // One-shot radio-geometry adoption of the widget's view when a pan stops
+    // displaying a kiwi source (the radio pan stayed frozen while recenters
+    // were widget-local — see PanRecenterPolicy.h).
+    void reconcileFlexPanGeometryAfterKiwiDisplay(const QString& panId,
+                                                  SpectrumWidget* spectrum);
     void syncKiwiSdrPanadapterUiStates();
     enum KiwiSdrUiSyncFlag {
         KiwiSdrUiSyncAppletReceivers = 0x01,
